@@ -2,13 +2,14 @@
 
 namespace Bareapi\Entity;
 
+use Bareapi\Repository\MetaObjectRepository;
 use DateTimeImmutable;
 use JsonSerializable;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: Bareapi\Repository\MetaObjectRepository::class)]
+#[ORM\Entity(repositoryClass: MetaObjectRepository::class)]
 #[ORM\Table(
     name: 'meta_objects',
     indexes: [

@@ -17,7 +17,7 @@ RUN docker-php-ext-install pdo pdo_pgsql
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Environemnt variables
-ENV DATABASE_URL=postgresql://bareapi:bareapi@db:5432/bareapi?serverVersion=17&charset=utf8
+ENV DATABASE_URL='postgresql://bareapi:bareapi@db:5432/bareapi?serverVersion=17&charset=utf8'
 
 WORKDIR /app
 
