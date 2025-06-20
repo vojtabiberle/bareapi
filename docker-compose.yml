@@ -17,7 +17,9 @@ services:
       - ./vendor:/app/vendor
 
   frankenphp:
-    image: dunglas/frankenphp:php8.4
+    build:
+      context: .
+      dockerfile: docker/frankenphp/Dockerfile
     container_name: bareapi_frankenphp
     working_dir: /app
     volumes:
