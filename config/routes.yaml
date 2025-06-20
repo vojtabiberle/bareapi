@@ -1,6 +1,2 @@
-index:
-    path: /
-    controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirect
-    defaults:
-        path: /api
-        permanent: true
+imports:
+    - { resource: 'attributes.yaml' }

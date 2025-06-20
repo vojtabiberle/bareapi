@@ -8,6 +8,7 @@ use JsonSchema\Validator;
 use JsonSchema\Constraints\Constraint;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Attribute\Route;
 
 class DataCreateController
 {
@@ -18,6 +19,7 @@ class DataCreateController
     ) {
     }
 
+    #[Route('/data/{type}', name: 'data_create', methods: ['POST'])]
     public function __invoke(string $type, Request $request): JsonResponse
     {
         $payload = json_decode($request->getContent());

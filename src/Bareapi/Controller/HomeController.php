@@ -3,6 +3,7 @@
 namespace Bareapi\Controller;
 
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
 
 class HomeController
 {
@@ -10,6 +11,7 @@ class HomeController
     {
     }
 
+    #[Route('/', name: 'home', methods: ['GET'])]
     public function __invoke(): Response
     {
         $schemaDir = $this->projectDir . '/config/schemas';

@@ -7,6 +7,7 @@ use JsonSchema\Validator;
 use JsonSchema\Constraints\Constraint;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Attribute\Route;
 
 class DataUpdateController
 {
@@ -17,6 +18,7 @@ class DataUpdateController
     ) {
     }
 
+    #[Route('/data/{type}/{id}', name: 'data_update', methods: ['PUT'])]
     public function __invoke(string $type, string $id, Request $request): JsonResponse
     {
         $payload = json_decode($request->getContent());

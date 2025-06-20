@@ -4,6 +4,7 @@ namespace Bareapi\Controller;
 
 use Bareapi\Repository\MetaObjectRepository;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Routing\Attribute\Route;
 
 class DataDeleteController
 {
@@ -11,6 +12,7 @@ class DataDeleteController
     {
     }
 
+    #[Route('/data/{type}/{id}', name: 'data_delete', methods: ['DELETE'])]
     public function __invoke(string $type, string $id): JsonResponse
     {
         $obj = $this->repo->find($id);
