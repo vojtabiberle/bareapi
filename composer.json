@@ -7,7 +7,8 @@
         "symfony/orm-pack": "*",
         "annotations": "*",
         "symfony/validator": "*",
-        "nelmio/cors-bundle": "*"
+        "nelmio/cors-bundle": "*",
+        "symfony/uid": "*"
     },
     "autoload": {
         "psr-4": {

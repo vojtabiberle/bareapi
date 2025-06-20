@@ -3,7 +3,11 @@
   "title": "Note",
   "type": "object",
   "properties": {
-    "id": { "type": "integer" },
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUIDv7"
+    },
     "title": { "type": "string" },
     "content": { "type": "string" }
   },

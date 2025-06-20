@@ -6,6 +6,19 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: bareapi_app
+    depends_on:
+      - db
+    environment:
+      APP_ENV: dev
+      APP_DEBUG: '1'
+      DATABASE_URL: 'postgresql://bareapi:bareapi@db:5432/bareapi?serverVersion=17&charset=utf8'
+
+  frankenphp:
+    image: ghcr.io/dunglas/frankenphp:2.3-php8.3
+    container_name: bareapi_frankenphp
+    working_dir: /app
+    volumes:
+      - .:/app:delegated
     ports:
       - '8000:8000'
     depends_on:
@@ -13,10 +26,10 @@ services:
     environment:
       APP_ENV: dev
       APP_DEBUG: '1'
-      DATABASE_URL: 'postgresql://bareapi:bareapi@db:5432/bareapi?serverVersion=15&charset=utf8'
+      DATABASE_URL: 'postgresql://bareapi:bareapi@db:5432/bareapi?serverVersion=17&charset=utf8'
 
   db:
-    image: postgres:15
+    image: postgres:17
     container_name: bareapi_db
     environment:
       POSTGRES_DB: bareapi
