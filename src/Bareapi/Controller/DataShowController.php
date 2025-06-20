@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Controller;
+namespace Bareapi\Controller;
 
-use App\Repository\MetaObjectRepository;
+use Bareapi\Repository\MetaObjectRepository;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class DataShowController

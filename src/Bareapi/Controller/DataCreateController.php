@@ -1,14 +1,15 @@
 <?php
 
-namespace App\Controller;
+namespace Bareapi\Controller;
 
-use App\Repository\MetaObjectRepository;
+use Bareapi\Entity\MetaObject;
+use Bareapi\Repository\MetaObjectRepository;
 use JsonSchema\Validator;
 use JsonSchema\Constraints\Constraint;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
-class DataUpdateController
+class DataCreateController
 {
     public function __construct(
         private MetaObjectRepository $repo,
@@ -17,7 +18,7 @@ class DataUpdateController
     ) {
     }
 
-    public function __invoke(string $type, string $id, Request $request): JsonResponse
+    public function __invoke(string $type, Request $request): JsonResponse
     {
         $payload = json_decode($request->getContent());
         $schemaFile = sprintf('%s/config/schemas/%s.json', $this->kernelProjectDir, $type);
@@ -37,14 +38,9 @@ class DataUpdateController
             return new JsonResponse(['errors' => $errors], 422);
         }
 
-        $obj = $this->repo->find($id);
-        if (!$obj || $obj->getType() !== $type) {
-            return new JsonResponse(['error' => 'Not found'], 404);
-        }
-
-        $obj->setData((array) $payload);
+        $obj = new MetaObject($type, $schema->version ?? '1.0', (array) $payload);
         $this->repo->save($obj);
 
-        return new JsonResponse($obj);
+        return new JsonResponse($obj, 201);
     }
 }

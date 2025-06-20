@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Repository;
+namespace Bareapi\Repository;
 
-use App\Entity\MetaObject;
+use Bareapi\Entity\MetaObject;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 

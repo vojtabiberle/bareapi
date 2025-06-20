@@ -1,21 +1,21 @@
 # Dynamic CRUD routes for all schema-defined object types
 data_collection:
     path: /data/{type}
-    controller: App\Controller\DataListController
+    controller: Bareapi\Controller\DataListController
     methods: [GET]
     requirements:
         type: '\\w+'
 
 data_create:
     path: /data/{type}
-    controller: App\Controller\DataCreateController
+    controller: Bareapi\Controller\DataCreateController
     methods: [POST]
     requirements:
         type: '\\w+'
 
 data_item:
     path: /data/{type}/{id}
-    controller: App\Controller\DataShowController
+    controller: Bareapi\Controller\DataShowController
     methods: [GET]
     requirements:
         type: '\\w+'
@@ -23,7 +23,7 @@ data_item:
 
 data_update:
     path: /data/{type}/{id}
-    controller: App\Controller\DataUpdateController
+    controller: Bareapi\Controller\DataUpdateController
     methods: [PUT]
     requirements:
         type: '\\w+'
@@ -31,7 +31,7 @@ data_update:
 
 data_delete:
     path: /data/{type}/{id}
-    controller: App\Controller\DataDeleteController
+    controller: Bareapi\Controller\DataDeleteController
     methods: [DELETE]
     requirements:
         type: '\\w+'

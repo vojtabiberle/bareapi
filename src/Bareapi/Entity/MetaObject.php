@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Entity;
+namespace Bareapi\Entity;
 
 use DateTimeImmutable;
 use JsonSerializable;
@@ -9,7 +9,7 @@ use Ramsey\Uuid\UuidInterface;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * @ORM\Entity(repositoryClass="App\Repository\MetaObjectRepository")
+ * @ORM\Entity(repositoryClass="Bareapi\Repository\MetaObjectRepository")
  * @ORM\Table(name="meta_objects", indexes={
  *     @ORM\Index(name="type_idx", columns={"type"})
  * })

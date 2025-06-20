@@ -8,19 +8,19 @@ services:
         bind:
             $projectDir: '%kernel.project_dir%'
 
-    App\:
-        resource: '../src/*'
-        exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
+    Bareapi\:
+        resource: '../src/Bareapi/*'
+        exclude: '../src/Bareapi/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
 
-    App\Controller\:
-        resource: '../src/Controller'
+    Bareapi\Controller\:
+        resource: '../src/Bareapi/Controller'
         tags: ['controller.service_arguments']
 
-    App\Controller\DataCreateController:
+    Bareapi\Controller\DataCreateController:
         arguments:
             $validator: '@JsonSchema\\Validator'
 
-    App\Controller\DataUpdateController:
+    Bareapi\Controller\DataUpdateController:
         arguments:
             $kernelProjectDir: '%kernel.project_dir%'
 
