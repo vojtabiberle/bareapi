@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Controller;
+
+use App\Repository\MetaObjectRepository;
+use JsonSchema\Validator;
+use JsonSchema\Constraints\Constraint;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+
+class DataUpdateController
+{
+    public function __construct(
+        private MetaObjectRepository $repo,
+        private Validator $validator,
+        private string $kernelProjectDir
+    ) {
+    }
+
+    public function __invoke(string $type, string $id, Request $request): JsonResponse
+    {
+        $payload = json_decode($request->getContent());
+        $schemaFile = sprintf('%s/config/schemas/%s.json', $this->kernelProjectDir, $type);
+
+        if (!file_exists($schemaFile)) {
+            return new JsonResponse(['error' => 'Unknown type'], 400);
+        }
+
+        $schema = json_decode((string) file_get_contents($schemaFile));
+        $this->validator->validate($payload, $schema, Constraint::CHECK_MODE_APPLY_DEFAULTS);
+
+        if (!$this->validator->isValid()) {
+            $errors = array_map(
+                fn(array $e) => sprintf('[%s] %s', $e['property'], $e['message']),
+                $this->validator->getErrors()
+            );
+            return new JsonResponse(['errors' => $errors], 422);
+        }
+
+        $obj = $this->repo->find($id);
+        if (!$obj || $obj->getType() !== $type) {
+            return new JsonResponse(['error' => 'Not found'], 404);
+        }
+
+        $obj->setData((array) $payload);
+        $this->repo->save($obj);
+
+        return new JsonResponse($obj);
+    }
+}

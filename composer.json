@@ -4,11 +4,22 @@
     "require": {
         "php": "^8.3",
         "symfony/skeleton": "*",
-        "symfony/orm-pack": "*",
-        "annotations": "*",
+        "doctrine/annotations": "*",
         "symfony/validator": "*",
+        "symfony/framework-bundle": "*",
+        "symfony/runtime": "*",
+        "symfony/yaml": "*",
+        "symfony/flex": "*",
         "nelmio/cors-bundle": "*",
-        "symfony/uid": "*"
+        "symfony/uid": "*",
+        "doctrine/dbal": "^3",
+        "doctrine/doctrine-bundle": "^2.15",
+        "doctrine/doctrine-migrations-bundle": "^3.4",
+        "doctrine/orm": "^3.4",
+        "symfony/security-csrf": "*",
+        "justinrainbow/json-schema": "*",
+        "symfony/doctrine-bridge": "^7.3",
+        "symfony/dotenv": "^7.3"
     },
     "autoload": {
         "psr-4": {
@@ -19,6 +30,12 @@
     "prefer-stable": true,
     "require-dev": {
         "symfony/maker-bundle": "^1.0"
+    },
+    "config": {
+        "allow-plugins": {
+            "symfony/flex": true,
+            "symfony/runtime": true
+        }
     },
     "scripts": {
         "auto-scripts": {

@@ -4,7 +4,3 @@ index:
     defaults:
         path: /api
         permanent: true
-
-controllers:
-    resource: '../src/Controller/'
-    type: annotation

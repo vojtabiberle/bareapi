@@ -13,6 +13,9 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# Environemnt variables
+ENV DATABASE_URL=postgresql://bareapi:bareapi@db:5432/bareapi?serverVersion=17&charset=utf8
+
 WORKDIR /app
 
 # install PHP dependencies

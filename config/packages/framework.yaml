@@ -6,4 +6,3 @@ framework:
         handler_id: null
     router:
         utf8: true
-    validation: { enable_annotations: true }

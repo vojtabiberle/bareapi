@@ -15,3 +15,13 @@ services:
     App\Controller\:
         resource: '../src/Controller'
         tags: ['controller.service_arguments']
+
+    App\Controller\DataCreateController:
+        arguments:
+            $validator: '@JsonSchema\\Validator'
+
+    App\Controller\DataUpdateController:
+        arguments:
+            $kernelProjectDir: '%kernel.project_dir%'
+
+    JsonSchema\Validator: ~

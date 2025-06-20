@@ -12,15 +12,21 @@ services:
       APP_ENV: dev
       APP_DEBUG: '1'
       DATABASE_URL: 'postgresql://bareapi:bareapi@db:5432/bareapi?serverVersion=17&charset=utf8'
+    volumes:
+      - .:/app:delegated
+      - ./vendor:/app/vendor
 
   frankenphp:
-    image: ghcr.io/dunglas/frankenphp:2.3-php8.3
+    image: dunglas/frankenphp:php8.4
     container_name: bareapi_frankenphp
     working_dir: /app
     volumes:
       - .:/app:delegated
+      - ./vendor:/app/vendor
     ports:
-      - '8000:8000'
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
     depends_on:
       - db
     environment:
@@ -40,12 +46,28 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
 
-  adminer:
-    image: adminer
-    container_name: bareapi_adminer
-    restart: always
-    ports:
-      - '8080:8080'
+###> doctrine/doctrine-bundle ###
+  database:
+    image: postgres:${POSTGRES_VERSION:-16}-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      # You should definitely change the password in production
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-!ChangeMe!}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB:-app}", "-U", "${POSTGRES_USER:-app}"]
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    volumes:
+      - database_data:/var/lib/postgresql/data:rw
+      # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
+      # - ./docker/db/data:/var/lib/postgresql/data:rw
+###< doctrine/doctrine-bundle ###
 
 volumes:
   db_data:
+
+###> doctrine/doctrine-bundle ###
+  database_data:
+###< doctrine/doctrine-bundle ###
