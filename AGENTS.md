@@ -103,3 +103,15 @@ Service auto-wiring is tuned in `config/services.yaml` to discover entities, rep
 
 ---  
 **BareAPI** delivers a fully schema-driven CRUD API platform: add schemas, get REST endpoints, no boilerplate per type.
+
+## Running commands
+
+Any application commands (e.g. Composer, Symfony console, migrations) should be run inside the PHP "app" container. For example:
+
+```bash
+docker compose run --rm app composer install
+docker compose run --rm app bin/console doctrine:migrations:migrate
+docker compose run --rm app bin/console cache:clear
+```
+
+Other tool commands (Docker Compose itself, git, host‑side utilities) can be run directly on the host.
