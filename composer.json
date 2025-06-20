@@ -49,5 +49,8 @@
         "post-update-cmd": [
             "@auto-scripts"
         ]
+    },
+    "extra": {
+        "src-dir": "src/Bareapi"
     }
 }
