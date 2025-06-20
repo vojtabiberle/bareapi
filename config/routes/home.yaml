@@ -1,0 +1,5 @@
+# Home page: list of schemas and endpoint overview
+home:
+    path: /
+    controller: Bareapi\Controller\HomeController
+    methods: [GET]
