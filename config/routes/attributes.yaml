@@ -1,0 +1,10 @@
+# Attribute-based routing for controllers and kernel
+controllers:
+    resource:
+        path: ../../src/Bareapi/Controller/
+        namespace: Bareapi\Controller
+    type: attribute
+
+kernel:
+    resource: Bareapi\Kernel
+    type: attribute
