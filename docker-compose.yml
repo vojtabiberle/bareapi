@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bareapi_app
+    ports:
+      - '8000:8000'
+    depends_on:
+      - db
+    environment:
+      APP_ENV: dev
+      APP_DEBUG: '1'
+      DATABASE_URL: 'postgresql://bareapi:bareapi@db:5432/bareapi?serverVersion=15&charset=utf8'
+
+  db:
+    image: postgres:15
+    container_name: bareapi_db
+    environment:
+      POSTGRES_DB: bareapi
+      POSTGRES_USER: bareapi
+      POSTGRES_PASSWORD: bareapi
+    ports:
+      - '5432:5432'
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer
+    container_name: bareapi_adminer
+    restart: always
+    ports:
+      - '8080:8080'
+
+volumes:
+  db_data:

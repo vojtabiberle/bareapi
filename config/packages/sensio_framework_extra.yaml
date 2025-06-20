@@ -1,0 +1,4 @@
+sensio_framework_extra:
+    router: true
+    request: false
+    view: false

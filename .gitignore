@@ -1,0 +1,11 @@
+/vendor/
+/var/
+/public/bundles/
+/.env
+/.env.local
+/.env.*.local
+.phpunit.result.cache
+
+# Ignore node modules and lock files if using front-end assets
+/node_modules/
+/package-lock.json
