@@ -130,9 +130,11 @@ composer test
 docker compose run --rm app php bin/phpunit
 ```
 
+New functional tests for REST controllers live in `tests/Controller/DataFunctionalTest.php`, covering create, fetch, update and delete flows against an in-memory SQLite schema.
+
 Tests also require the testing framework enabled. Ensure you have:
 ```yaml
-# config/packages/framework.yaml
+# config/packages/test/framework.yaml
 framework:
   test: true
   session:
