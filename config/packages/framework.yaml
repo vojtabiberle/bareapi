@@ -6,3 +6,5 @@ framework:
         handler_id: null
     router:
         utf8: true
+    # enable test service container and client
+    test: true

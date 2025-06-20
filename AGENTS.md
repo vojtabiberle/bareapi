@@ -115,3 +115,26 @@ docker compose run --rm app bin/console cache:clear
 ```
 
 Other tool commands (Docker Compose itself, git, host‑side utilities) can be run directly on the host.
+
+### PHPUnit
+
+Install the Symfony PHPUnit Bridge (along with PHPUnit and helpers) in the app container:
+```bash
+docker compose run --rm app composer require --dev symfony/test-pack --no-interaction
+```
+
+Run the test suite via either the composer helper or directly:
+```bash
+composer test
+# or:
+docker compose run --rm app php bin/phpunit
+```
+
+Tests also require the testing framework enabled. Ensure you have:
+```yaml
+# config/packages/framework.yaml
+framework:
+  test: true
+  session:
+    storage_factory_id: session.storage.factory.mock_file
+```
