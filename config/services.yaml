@@ -18,7 +18,7 @@ services:
 
     Bareapi\Controller\DataCreateController:
         arguments:
-            $validator: '@JsonSchema\\Validator'
+            $kernelProjectDir: '%kernel.project_dir%'
 
     Bareapi\Controller\DataUpdateController:
         arguments:

@@ -8,43 +8,32 @@ use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass="Bareapi\Repository\MetaObjectRepository")
- * @ORM\Table(name="meta_objects", indexes={
- *     @ORM\Index(name="type_idx", columns={"type"})
- * })
- */
+#[ORM\Entity(repositoryClass: Bareapi\Repository\MetaObjectRepository::class)]
+#[ORM\Table(
+    name: 'meta_objects',
+    indexes: [
+        new ORM\Index(name: 'type_idx', columns: ['type']),
+    ]
+)]
 class MetaObject implements JsonSerializable
 {
-    /**
-     * @ORM\Id
-     * @ORM\Column(type="uuid", unique=true)
-     */
+    #[ORM\Id]
+    #[ORM\Column(type: 'uuid', unique: true)]
     private UuidInterface $id;
 
-    /**
-     * @ORM\Column(type="string", length=100)
-     */
+    #[ORM\Column(type: 'string', length: 100)]
     private string $type;
 
-    /**
-     * @ORM\Column(name="schema_version", type="string", length=50)
-     */
+    #[ORM\Column(name: 'schema_version', type: 'string', length: 50)]
     private string $schemaVersion;
 
-    /**
-     * @ORM\Column(type="json", columnDefinition="jsonb")
-     */
+    #[ORM\Column(type: 'json', columnDefinition: 'jsonb')]
     private array $data = [];
 
-    /**
-     * @ORM\Column(name="created_at", type="datetime_immutable")
-     */
+    #[ORM\Column(name: 'created_at', type: 'datetime_immutable')]
     private DateTimeImmutable $createdAt;
 
-    /**
-     * @ORM\Column(name="updated_at", type="datetime_immutable")
-     */
+    #[ORM\Column(name: 'updated_at', type: 'datetime_immutable')]
     private DateTimeImmutable $updatedAt;
 
     public function __construct(string $type, string $schemaVersion, array $data)

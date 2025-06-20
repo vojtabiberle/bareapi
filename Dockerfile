@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install pdo_pgsql intl opcache \
     && rm -rf /var/lib/apt/lists/*
 
+# Install PHP extensions
+RUN docker-php-ext-install pdo pdo_pgsql
+
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -18,12 +21,12 @@ ENV DATABASE_URL=postgresql://bareapi:bareapi@db:5432/bareapi?serverVersion=17&c
 
 WORKDIR /app
 
+# copy application code
+COPY . ./
+
 # install PHP dependencies
 COPY composer.json composer.lock* ./
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
-
-# copy application code
-COPY . ./
 
 # start the built-in web server
 CMD ["php", "-S", "0.0.0.0:8000", "-t", "public"]

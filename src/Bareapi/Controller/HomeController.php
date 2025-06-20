@@ -19,7 +19,7 @@ class HomeController
         $types = array_map(fn(string $f): string => basename($f, '.json'), $files);
 
         $html = '<!DOCTYPE html>';
-        $html .= '<html><head><meta charset="utf-8"><title>BareAPI</title></head><body>';
+        $html .= '<html lang="en"><head><meta charset="utf-8"><title>BareAPI</title></head><body>';
         $html .= '<h1>BareAPI</h1>';
         $html .= '<h2>Available Schemas</h2><ul>';
         foreach ($types as $type) {

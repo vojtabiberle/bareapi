@@ -1,2 +1,2 @@
-imports:
-    - { resource: 'attributes.yaml' }
+- { resource: 'routes/attributes.yaml' }
+
