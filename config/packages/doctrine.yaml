@@ -11,6 +11,6 @@ doctrine:
             Bareapi:
                 is_bundle: false
                 type: attribute
-                dir: '%kernel.project_dir%/src/Bareapi/Entity'
+                dir: '%kernel.project_dir%/src/Entity'
                 prefix: 'Bareapi\Entity'
                 alias: Bareapi

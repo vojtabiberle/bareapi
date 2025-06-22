@@ -9,11 +9,11 @@ services:
             $projectDir: '%kernel.project_dir%'
 
     Bareapi\:
-        resource: '../src/Bareapi/*'
-        exclude: '../src/Bareapi/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
+        resource: '../src/*'
+        exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
 
     Bareapi\Controller\:
-        resource: '../src/Bareapi/Controller'
+        resource: '../src/Controller'
         tags: ['controller.service_arguments']
 
     Bareapi\Controller\DataCreateController:

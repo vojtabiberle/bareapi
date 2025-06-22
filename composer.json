@@ -24,7 +24,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Bareapi\\": "src/Bareapi/"
+            "Bareapi\\": "src/"
         }
     },
     "minimum-stability": "stable",
@@ -53,8 +53,5 @@
             "@auto-scripts"
         ],
         "test": "vendor/bin/phpunit"
-    },
-    "extra": {
-        "src-dir": "src/Bareapi"
     }
 }

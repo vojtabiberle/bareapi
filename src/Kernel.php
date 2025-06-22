@@ -14,7 +14,7 @@ class Kernel extends BaseKernel
 
     protected function configureContainer(ContainerConfigurator $container): void
     {
-        $confDir = dirname(__DIR__) . '/../config';
+        $confDir = dirname(__DIR__) . '/config';
         $container->import($confDir . '/{packages}/*.yaml');
         if (is_dir($confDir . '/packages/' . $this->environment)) {
             $container->import($confDir . '/{packages}/' . $this->environment . '/*.yaml');
@@ -25,7 +25,7 @@ class Kernel extends BaseKernel
 
     protected function configureRoutes(RoutingConfigurator $routes): void
     {
-        $confDir = dirname(__DIR__) . '/../config';
+        $confDir = dirname(__DIR__) . '/config';
         if (is_dir($confDir . '/{routes}/' . $this->environment)) {
             $routes->import($confDir . '/{routes}/' . $this->environment . '/*.yaml');
         }
