@@ -6,3 +6,9 @@ framework:
         handler_id: null
     router:
         utf8: true
+    cache:
+        pools:
+            doctrine.system_cache_pool:
+                adapter: cache.adapter.array
+            doctrine.result_cache_pool:
+                adapter: cache.adapter.array
