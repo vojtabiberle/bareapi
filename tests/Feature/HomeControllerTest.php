@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Feature;
+namespace Bareapi\Tests\Feature;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 

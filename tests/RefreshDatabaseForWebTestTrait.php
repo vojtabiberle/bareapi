@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests;
+namespace Bareapi\Tests;
 
 trait RefreshDatabaseForWebTestTrait
 {

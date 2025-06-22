@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Tests\Feature;
+namespace Bareapi\Tests\Feature;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use App\Tests\RefreshDatabaseForWebTestTrait;
+use Bareapi\Tests\RefreshDatabaseForWebTestTrait;
 
 class DataCreateControllerTest extends WebTestCase
 {

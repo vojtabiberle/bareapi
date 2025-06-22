@@ -30,7 +30,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "App\\Tests\\": "tests/"
+            "Bareapi\\Tests\\": "tests/"
         }
     },
     "minimum-stability": "stable",
@@ -60,6 +60,6 @@
             "@auto-scripts"
         ],
         "test-local": "vendor/bin/phpunit --configuration phpunit.xml.dist",
-        "test": "docker-compose run -e APP_ENV=test -e APP_DEBUG=1 app vendor/bin/phpunit --configuration phpunit.xml.dist"
+        "test": "docker-compose run -e APP_ENV=test -e APP_DEBUG=0 app vendor/bin/phpunit --configuration phpunit.xml.dist"
     }
 }
