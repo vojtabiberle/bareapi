@@ -43,7 +43,7 @@ class DataUpdateController
                         array_key_exists('message', $e) ? ControllerUtil::toStringSafe($e['message']) : ''
                     )
                     : '',
-                $this->validator->getErrors()
+                (array) $this->validator->getErrors()
             );
             return new JsonResponse(['errors' => $errors], 422);
         }
