@@ -48,6 +48,9 @@ jobs:
     - name: Validate composer.json
       run: composer validate --strict
 
+    - name: Prepare .env file
+      run: cp .env.test .env
+
     - name: Run Tests
       run: vendor/bin/phpunit --configuration phpunit.xml.dist --coverage-clover build/logs/clover.xml
 
