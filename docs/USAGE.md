@@ -132,6 +132,75 @@ curl -X DELETE http://localhost:8000/data/note/018f8e2e-7b6c-7b1a-8e2e-7b6c7b1a8
 
 ---
 
+## Tags and Tag Bindings
+
+This section explains how to use the `Tag` and `TagBinding` data models to categorize and link resources.
+
+### Tag Model Overview
+
+The `Tag` object allows you to create labels that can be applied to other resources. Each tag has a unique identifier, a name, a color for display purposes, and information about its creator.
+
+**Schema:**
+```json
+{
+  "id": "UUIDv7",
+  "name": "string",
+  "color": "string",
+  "creator": {
+    "id": "UUIDv7",
+    "name": "string"
+  }
+}
+```
+
+### TagBinding Model Explanation
+
+The `TagBinding` model provides a flexible way to associate a `Tag` with any other object, whether it's an internal resource within our system or an external one. This is a polymorphic association, meaning a single `TagBinding` can link a tag to different types of objects. This is achieved through the `objectId` field, which can hold a UUID for an internal resource or any unique string identifier for an external one.
+
+**Schema:**
+```json
+{
+  "tagId": "UUIDv7",
+  "objectId": "string"
+}
+```
+
+### Usage Examples
+
+Here are some examples of how to use `TagBinding`.
+
+#### Binding to Internal Notes
+
+To link a `Tag` to an internal `Note` object, you populate the `objectId` field of the `TagBinding` with the `id` of the target `Note`.
+
+**Example:**
+
+Let's say you have a `Tag` with `id: "018f8e3a-5b1a-7c2b-8e3a-5b1a7c2b8e3a"` and a `Note` with `id: "018f8e2e-7b6c-7b1a-8e2e-7b6c7b1a8e2e"`.
+
+You would create a `TagBinding` like this:
+
+```json
+{
+  "tagId": "018f8e3a-5b1a-7c2b-8e3a-5b1a7c2b8e3a",
+  "objectId": "018f8e2e-7b6c-7b1a-8e2e-7b6c7b1a8e2e"
+}
+```
+
+#### Binding to External Resources
+
+To link a `Tag` to an external resource, you use a unique string identifier for that resource in the `objectId` field. This could be a URI, an ID from another system, or any other unique key.
+
+**Example:**
+
+To tag an external article, you could use its URL as the `objectId`.
+
+```json
+{
+  "tagId": "018f8e3a-5b1a-7c2b-8e3a-5b1a7c2b8e3a",
+  "objectId": "https://example.com/articles/important-topic"
+}
+```
+---
 ## Summary
 
 - All CRUD operations use `/data/{type}` or `/data/{type}/{UUID}` endpoints.
