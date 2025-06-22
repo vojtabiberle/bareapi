@@ -140,3 +140,101 @@ framework:
   session:
     storage_factory_id: session.storage.factory.mock_file
 ```
+## Agents (Controllers)
+
+The following controllers act as the "agents" of the BareAPI application, each responsible for a specific aspect of CRUD operations and request handling.
+
+### DataCreateController
+
+- **Role:** Handles creation of new meta objects.
+- **Responsibilities:**  
+  - Receives `POST /data/{type}` requests.
+  - Validates incoming data against the relevant JSON Schema.
+  - Persists new objects using the repository.
+- **Inputs:**  
+  - HTTP POST request with JSON payload.
+  - `{type}` route parameter.
+- **Outputs:**  
+  - HTTP 201 response with created object or 422 on validation error.
+- **Interactions:**  
+  - Loads schema from `config/schemas/`.
+  - Uses `MetaObjectRepository` to save data.
+  - Returns response to client.
+
+### DataDeleteController
+
+- **Role:** Handles deletion of meta objects.
+- **Responsibilities:**  
+  - Receives `DELETE /data/{type}/{id}` requests.
+  - Locates and deletes the specified object.
+- **Inputs:**  
+  - HTTP DELETE request.
+  - `{type}` and `{id}` route parameters.
+- **Outputs:**  
+  - HTTP 204 response on success, 404 if not found.
+- **Interactions:**  
+  - Uses `MetaObjectRepository` to find and delete objects.
+  - Returns response to client.
+
+### DataListController
+
+- **Role:** Lists meta objects of a given type.
+- **Responsibilities:**  
+  - Receives `GET /data/{type}` requests.
+  - Applies optional query filters.
+  - Retrieves and returns a list of objects.
+- **Inputs:**  
+  - HTTP GET request.
+  - `{type}` route parameter.
+  - Optional query parameters for filtering.
+- **Outputs:**  
+  - HTTP 200 response with array of objects.
+- **Interactions:**  
+  - Uses `MetaObjectRepository` to query objects.
+  - Returns response to client.
+
+### DataShowController
+
+- **Role:** Shows a single meta object by ID.
+- **Responsibilities:**  
+  - Receives `GET /data/{type}/{id}` requests.
+  - Retrieves the specified object.
+- **Inputs:**  
+  - HTTP GET request.
+  - `{type}` and `{id}` route parameters.
+- **Outputs:**  
+  - HTTP 200 response with object, 404 if not found.
+- **Interactions:**  
+  - Uses `MetaObjectRepository` to find object.
+  - Returns response to client.
+
+### DataUpdateController
+
+- **Role:** Updates an existing meta object.
+- **Responsibilities:**  
+  - Receives `PUT /data/{type}/{id}` requests.
+  - Validates updated data against the JSON Schema.
+  - Persists changes.
+- **Inputs:**  
+  - HTTP PUT request with JSON payload.
+  - `{type}` and `{id}` route parameters.
+- **Outputs:**  
+  - HTTP 200 response with updated object, 422 on validation error, 404 if not found.
+- **Interactions:**  
+  - Loads schema from `config/schemas/`.
+  - Uses `MetaObjectRepository` to update data.
+  - Returns response to client.
+
+### HomeController
+
+- **Role:** Handles the root endpoint and basic health/info checks.
+- **Responsibilities:**  
+  - Receives requests to `/`.
+  - Returns API status or welcome message.
+- **Inputs:**  
+  - HTTP GET request.
+- **Outputs:**  
+  - HTTP 200 response with status or info.
+- **Interactions:**  
+  - No repository interaction.
+  - Returns response to client.

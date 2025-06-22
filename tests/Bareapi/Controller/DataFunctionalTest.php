@@ -11,19 +11,19 @@ class DataFunctionalTest extends WebTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        self::bootKernel();
-        $em = self::getContainer()->get('doctrine')->getManager();
+    }
+
+    public function testCreateShowUpdateDeleteFlow(): void
+    {
+        $client = static::createClient();
+        // prepare empty schema in in-memory SQLite
+        $em = $client->getContainer()->get('doctrine')->getManager();
         $tool = new SchemaTool($em);
         $classes = [
             $em->getClassMetadata(MetaObject::class),
         ];
         $tool->dropSchema($classes);
         $tool->createSchema($classes);
-    }
-
-    public function testCreateShowUpdateDeleteFlow(): void
-    {
-        $client = static::createClient();
 
         // Create
         $payload = ['title' => 'Test note', 'content' => 'Hello world'];
@@ -64,5 +64,33 @@ class DataFunctionalTest extends WebTestCase
         // Confirm delete
         $client->request('GET', "/data/notes/{$id}");
         $this->assertResponseStatusCodeSame(404);
+    }
+
+    public function testInvalidUuidBindingShowsHtmlErrorPage(): void
+    {
+        $client = static::createClient();
+        // prepare in-memory schema again
+        $em = $client->getContainer()->get('doctrine')->getManager();
+        $tool = new SchemaTool($em);
+        $classes = [
+            $em->getClassMetadata(MetaObject::class),
+        ];
+        $tool->dropSchema($classes);
+        $tool->createSchema($classes);
+
+        // This triggers a UUID conversion error during persist
+        $client->request(
+            'POST',
+            '/data/notes',
+            [], [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode(['title' => 'fail-test'])
+        );
+        $this->assertResponseStatusCodeSame(500);
+        $content = $client->getResponse()->getContent();
+        $this->assertStringContainsString(
+            'Could not convert PHP value of type Ramsey\\Uuid\\Lazy\\LazyUuidFromString to type uuid',
+            $content
+        );
     }
 }
