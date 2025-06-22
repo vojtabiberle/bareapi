@@ -1,6 +1,6 @@
 <?php
 
-namespace Bareapi\Tests\Controller;
+namespace App\Tests\Integration;
 
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Routing\RouterInterface;
