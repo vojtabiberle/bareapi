@@ -4,6 +4,10 @@ namespace Bareapi\Tests;
 
 trait RefreshDatabaseForWebTestTrait
 {
+    /**
+     * @param array<string, mixed> $options
+     * @param array<string, mixed> $server
+     */
     public static function createClient(array $options = [], array $server = []): \Symfony\Bundle\FrameworkBundle\KernelBrowser
     {
         $client = parent::createClient($options, $server);

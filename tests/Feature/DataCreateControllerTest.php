@@ -23,13 +23,16 @@ class DataCreateControllerTest extends WebTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            json_encode($payload)
+            is_string(json_encode($payload)) ? json_encode($payload) : null
         );
 
         $this->assertResponseStatusCodeSame(201);
-        $response = json_decode($client->getResponse()->getContent(), true);
+        $content = $client->getResponse()->getContent();
+        $response = json_decode(is_string($content) ? $content : '', true);
+        $this->assertIsArray($response, 'Response is not a valid array');
         $this->assertArrayHasKey('id', $response);
         $this->assertArrayHasKey('data', $response);
+        $this->assertIsArray($response['data'], 'Data is not a valid array');
         $this->assertSame('Meeting Notes', $response['data']['title']);
         $this->assertSame('Discuss project milestones and deadlines.', $response['data']['content']);
     }
@@ -47,11 +50,13 @@ class DataCreateControllerTest extends WebTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            json_encode($payload)
+            is_string(json_encode($payload)) ? json_encode($payload) : null
         );
 
         $this->assertResponseStatusCodeSame(422);
-        $response = json_decode($client->getResponse()->getContent(), true);
+        $content = $client->getResponse()->getContent();
+        $response = json_decode(is_string($content) ? $content : '', true);
+        $this->assertIsArray($response, 'Response is not a valid array');
         $this->assertArrayHasKey('errors', $response);
         $this->assertIsArray($response['errors']);
     }

@@ -24,10 +24,14 @@ class DataDeleteControllerTest extends WebTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            json_encode($payload)
+            is_string(json_encode($payload)) ? json_encode($payload) : null
         );
         $this->assertResponseStatusCodeSame(201);
-        $created = json_decode($client->getResponse()->getContent(), true);
+        $content = $client->getResponse()->getContent();
+        $created = json_decode(is_string($content) ? $content : '', true);
+        $this->assertIsArray($created, 'Created response is not a valid array');
+        $this->assertArrayHasKey('id', $created, 'Created response does not contain id');
+        $this->assertIsString($created['id'], 'Created id is not a string');
 
         // Delete the note
         $client->request('DELETE', '/data/notes/' . $created['id']);
