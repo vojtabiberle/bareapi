@@ -53,7 +53,7 @@ class DataUpdateController
             return new JsonResponse(['error' => 'Not found'], 404);
         }
 
-        $obj->setData(ControllerUtil::toStringKeyedArray($payload));
+        $obj->setData(ControllerUtil::toStringKeyedArray((array)$payload));
         $this->repo->save($obj);
 
         return new JsonResponse($obj);

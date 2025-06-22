@@ -52,7 +52,7 @@ class DataCreateController
         $obj = new MetaObject(
             $type,
             (is_object($schema) && isset($schema->version)) ? ControllerUtil::toStringSafe($schema->version) : '1.0',
-            ControllerUtil::toStringKeyedArray($payload)
+            ControllerUtil::toStringKeyedArray((array)$payload)
         );
         $this->repo->save($obj);
 
