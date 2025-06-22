@@ -3,9 +3,12 @@
 namespace App\Tests\Feature;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use App\Tests\RefreshDatabaseForWebTestTrait;
 
 class DataDeleteControllerTest extends WebTestCase
 {
+    use RefreshDatabaseForWebTestTrait;
+
     public function testDeleteNoteSuccess(): void
     {
         $client = static::createClient();
@@ -17,7 +20,7 @@ class DataDeleteControllerTest extends WebTestCase
         ];
         $client->request(
             'POST',
-            '/data/note',
+            '/data/notes',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
@@ -27,18 +30,18 @@ class DataDeleteControllerTest extends WebTestCase
         $created = json_decode($client->getResponse()->getContent(), true);
 
         // Delete the note
-        $client->request('DELETE', '/data/note/' . $created['id']);
+        $client->request('DELETE', '/data/notes/' . $created['id']);
         $this->assertResponseStatusCodeSame(204);
 
         // Confirm deletion
-        $client->request('GET', '/data/note/' . $created['id']);
+        $client->request('GET', '/data/notes/' . $created['id']);
         $this->assertResponseStatusCodeSame(404);
     }
 
     public function testDeleteNoteNotFound(): void
     {
         $client = static::createClient();
-        $client->request('DELETE', '/data/note/00000000-0000-0000-0000-000000000000');
+        $client->request('DELETE', '/data/notes/00000000-0000-0000-0000-000000000000');
         $this->assertResponseStatusCodeSame(404);
     }
 }

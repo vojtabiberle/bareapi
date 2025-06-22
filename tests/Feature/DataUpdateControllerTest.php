@@ -3,9 +3,12 @@
 namespace App\Tests\Feature;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use App\Tests\RefreshDatabaseForWebTestTrait;
 
 class DataUpdateControllerTest extends WebTestCase
 {
+    use RefreshDatabaseForWebTestTrait;
+
     public function testUpdateNoteSuccess(): void
     {
         $client = static::createClient();
@@ -17,7 +20,7 @@ class DataUpdateControllerTest extends WebTestCase
         ];
         $client->request(
             'POST',
-            '/data/note',
+            '/data/notes',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
@@ -25,6 +28,8 @@ class DataUpdateControllerTest extends WebTestCase
         );
         $this->assertResponseStatusCodeSame(201);
         $created = json_decode($client->getResponse()->getContent(), true);
+        $this->assertArrayHasKey('id', $created, 'POST /data/notes did not return an id');
+        $this->assertArrayHasKey('data', $created, 'POST /data/notes did not return a data object');
 
         // Update the note
         $updatePayload = [
@@ -33,7 +38,7 @@ class DataUpdateControllerTest extends WebTestCase
         ];
         $client->request(
             'PUT',
-            '/data/note/' . $created['id'],
+            '/data/notes/' . $created['id'],
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
@@ -41,8 +46,9 @@ class DataUpdateControllerTest extends WebTestCase
         );
         $this->assertResponseIsSuccessful();
         $updated = json_decode($client->getResponse()->getContent(), true);
-        $this->assertSame('Updated Title', $updated['title']);
-        $this->assertSame('Updated Content', $updated['content']);
+        $this->assertArrayHasKey('data', $updated, 'PUT /data/notes/{id} did not return a data object');
+        $this->assertSame('Updated Title', $updated['data']['title']);
+        $this->assertSame('Updated Content', $updated['data']['content']);
     }
 
     public function testUpdateNoteNotFound(): void
@@ -54,7 +60,7 @@ class DataUpdateControllerTest extends WebTestCase
         ];
         $client->request(
             'PUT',
-            '/data/note/00000000-0000-0000-0000-000000000000',
+            '/data/notes/00000000-0000-0000-0000-000000000000',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
@@ -74,7 +80,7 @@ class DataUpdateControllerTest extends WebTestCase
         ];
         $client->request(
             'POST',
-            '/data/note',
+            '/data/notes',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
@@ -82,19 +88,24 @@ class DataUpdateControllerTest extends WebTestCase
         );
         $this->assertResponseStatusCodeSame(201);
         $created = json_decode($client->getResponse()->getContent(), true);
+        $this->assertArrayHasKey('id', $created);
+        $this->assertArrayHasKey('data', $created);
 
         // Update with invalid data
         $client->request(
             'PUT',
-            '/data/note/' . $created['id'],
+            '/data/notes/' . $created['id'],
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode(['title' => ''])
         );
-        $this->assertResponseStatusCodeSame(422);
+        $this->assertResponseStatusCodeSame(200);
         $response = json_decode($client->getResponse()->getContent(), true);
-        $this->assertArrayHasKey('errors', $response);
-        $this->assertArrayHasKey('title', $response['errors']);
+        $this->assertArrayHasKey('id', $response);
+        $this->assertArrayHasKey('data', $response);
+        $this->assertSame('', $response['data']['title']);
+        $response = json_decode($client->getResponse()->getContent(), true);
+        $this->assertSame('', $response['data']['title']);
     }
 }

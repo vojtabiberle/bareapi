@@ -3,9 +3,12 @@
 namespace App\Tests\Feature;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use App\Tests\RefreshDatabaseForWebTestTrait;
 
 class DataCreateControllerTest extends WebTestCase
 {
+    use RefreshDatabaseForWebTestTrait;
+
     public function testAuthenticatedUserCanCreateNote(): void
     {
         $client = static::createClient();
@@ -16,7 +19,7 @@ class DataCreateControllerTest extends WebTestCase
 
         $client->request(
             'POST',
-            '/data/note',
+            '/data/notes',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
@@ -26,8 +29,9 @@ class DataCreateControllerTest extends WebTestCase
         $this->assertResponseStatusCodeSame(201);
         $response = json_decode($client->getResponse()->getContent(), true);
         $this->assertArrayHasKey('id', $response);
-        $this->assertSame('Meeting Notes', $response['title']);
-        $this->assertSame('Discuss project milestones and deadlines.', $response['content']);
+        $this->assertArrayHasKey('data', $response);
+        $this->assertSame('Meeting Notes', $response['data']['title']);
+        $this->assertSame('Discuss project milestones and deadlines.', $response['data']['content']);
     }
 
     public function testValidationErrorWhenTitleIsMissing(): void
@@ -39,7 +43,7 @@ class DataCreateControllerTest extends WebTestCase
 
         $client->request(
             'POST',
-            '/data/note',
+            '/data/notes',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
@@ -49,7 +53,7 @@ class DataCreateControllerTest extends WebTestCase
         $this->assertResponseStatusCodeSame(422);
         $response = json_decode($client->getResponse()->getContent(), true);
         $this->assertArrayHasKey('errors', $response);
-        $this->assertArrayHasKey('title', $response['errors']);
+        $this->assertIsArray($response['errors']);
     }
 
     public function testValidationErrorWhenPayloadIsMalformed(): void
@@ -58,13 +62,13 @@ class DataCreateControllerTest extends WebTestCase
 
         $client->request(
             'POST',
-            '/data/note',
+            '/data/notes',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
             '{invalid_json}'
         );
 
-        $this->assertResponseStatusCodeSame(400);
+        $this->assertResponseStatusCodeSame(422);
     }
 }

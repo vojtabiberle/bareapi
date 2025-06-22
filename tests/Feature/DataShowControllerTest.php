@@ -3,9 +3,12 @@
 namespace App\Tests\Feature;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use App\Tests\RefreshDatabaseForWebTestTrait;
 
 class DataShowControllerTest extends WebTestCase
 {
+    use RefreshDatabaseForWebTestTrait;
+
     public function testShowNoteReturnsNoteData(): void
     {
         $client = static::createClient();
@@ -17,7 +20,7 @@ class DataShowControllerTest extends WebTestCase
         ];
         $client->request(
             'POST',
-            '/data/note',
+            '/data/notes',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
@@ -27,17 +30,17 @@ class DataShowControllerTest extends WebTestCase
         $created = json_decode($client->getResponse()->getContent(), true);
 
         // Now, retrieve the note
-        $client->request('GET', '/data/note/' . $created['id']);
+        $client->request('GET', '/data/notes/' . $created['id']);
         $this->assertResponseIsSuccessful();
         $response = json_decode($client->getResponse()->getContent(), true);
-        $this->assertSame('Show Test', $response['title']);
-        $this->assertSame('Show content', $response['content']);
+        $this->assertSame('Show Test', $response['data']['title']);
+        $this->assertSame('Show content', $response['data']['content']);
     }
 
     public function testShowNoteNotFound(): void
     {
         $client = static::createClient();
-        $client->request('GET', '/data/note/00000000-0000-0000-0000-000000000000');
+        $client->request('GET', '/data/notes/00000000-0000-0000-0000-000000000000');
         $this->assertResponseStatusCodeSame(404);
     }
 }

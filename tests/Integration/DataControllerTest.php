@@ -4,9 +4,12 @@ namespace App\Tests\Integration;
 
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Routing\RouterInterface;
+use App\Tests\RefreshDatabaseForKernelTestTrait;
 
 class DataControllerTest extends KernelTestCase
 {
+    use RefreshDatabaseForKernelTestTrait;
+
     public function testRoutesAreRegistered(): void
     {
         self::bootKernel();
