@@ -25,6 +25,11 @@ class DataUpdateController
             return new JsonResponse(['error' => 'Invalid type'], 400);
         }
         $payload = json_decode($request->getContent());
+        if (is_object($payload) && property_exists($payload, 'type')) {
+            if (!is_string($payload->type) || !preg_match('/^[A-Za-z0-9_]+$/', $payload->type)) {
+                return new JsonResponse(['error' => 'Invalid type'], 400);
+            }
+        }
         $schemaFile = sprintf('%s/config/schemas/%s.json', $this->kernelProjectDir, $type);
 
         if (!file_exists($schemaFile)) {

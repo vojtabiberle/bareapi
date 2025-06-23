@@ -76,4 +76,28 @@ class DataCreateControllerTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(422);
     }
+    public function testValidationErrorWhenTypeIsInvalid(): void
+    {
+        $client = static::createClient();
+        $payload = [
+            'title' => 'Invalid Type',
+            'content' => 'This should fail.',
+            'type' => 'invalid-type'
+        ];
+
+        $client->request(
+            'POST',
+            '/api/notes',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            is_string(json_encode($payload)) ? json_encode($payload) : null
+        );
+
+        $this->assertResponseStatusCodeSame(400);
+        $content = $client->getResponse()->getContent();
+        $response = json_decode(is_string($content) ? $content : '', true);
+        $this->assertIsArray($response, 'Response is not a valid array');
+        $this->assertSame(['error' => 'Invalid type'], $response);
+    }
 }

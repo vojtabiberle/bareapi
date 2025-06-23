@@ -61,7 +61,7 @@
         "post-update-cmd": [
             "@auto-scripts"
         ],
-        "test-local": "vendor/bin/phpunit --configuration phpunit.1xml.dist",
+        "test-local": "APP_ENV=test APP_DEBUG=0 vendor/bin/phpunit --configuration phpunit.xml.dist",
         "test": "docker-compose run -e APP_ENV=test -e APP_DEBUG=0 --rm app vendor/bin/phpunit --configuration phpunit.xml.dist",
         "phpstan-local": "phpstan analyse src tests --level max",
         "phpstan": "docker-compose run --rm app vendor/bin/phpstan analyse src tests --level max"
