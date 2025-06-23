@@ -2,17 +2,6 @@
 
 This plan categorizes findings by priority and provides clear, actionable steps for remediation.
 
----
-
-## 🚨 Critical
-
-### Issue: Path Traversal Vulnerability in Type Parameter
-- **Location:** [`src/Controller/DataCreateController.php`](src/Controller/DataCreateController.php:26), [`src/Controller/DataUpdateController.php`](src/Controller/DataUpdateController.php:25)
-- **Recommendation:** Sanitize the `$type` parameter to allow only alphanumeric and underscore characters (e.g., `/^[a-zA-Z0-9_]+$/`). Reject requests with invalid types before using them in file paths.
-- **Rationale:** Prevents attackers from accessing arbitrary files via crafted type values, addressing a major security risk (OWASP A1: Injection).
-
----
-
 ## ⚠️ High
 
 ### Issue: Code Duplication in Schema Loading and Validation
