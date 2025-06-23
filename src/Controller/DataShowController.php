@@ -8,11 +8,9 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class DataShowController
 {
-    public function __construct(private MetaObjectRepository $repo)
-    {
-    }
+    public function __construct(private MetaObjectRepository $repo) {}
 
-    #[Route('/data/{type}/{id}', name: 'data_show', methods: ['GET'])]
+    #[Route('/api/{type}/{id}', name: 'data_show', methods: ['GET'])]
     public function __invoke(string $type, string $id): JsonResponse
     {
         $obj = $this->repo->find($id);

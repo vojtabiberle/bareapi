@@ -18,7 +18,7 @@ class DataUpdateController
         private string $kernelProjectDir
     ) {}
 
-    #[Route('/data/{type}/{id}', name: 'data_update', methods: ['PUT'])]
+    #[Route('/api/{type}/{id}', name: 'data_update', methods: ['PUT'])]
     public function __invoke(string $type, string $id, Request $request): JsonResponse
     {
         $payload = json_decode($request->getContent());

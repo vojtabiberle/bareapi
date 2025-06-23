@@ -19,7 +19,7 @@ class DataCreateController
         private string $kernelProjectDir
     ) {}
 
-    #[Route('/data/{type}', name: 'data_create', methods: ['POST'])]
+    #[Route('/api/{type}', name: 'data_create', methods: ['POST'])]
     public function __invoke(string $type, Request $request): JsonResponse
     {
         $payload = json_decode($request->getContent());

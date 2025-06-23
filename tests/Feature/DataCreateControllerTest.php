@@ -19,7 +19,7 @@ class DataCreateControllerTest extends WebTestCase
 
         $client->request(
             'POST',
-            '/data/notes',
+            '/api/notes',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
@@ -46,7 +46,7 @@ class DataCreateControllerTest extends WebTestCase
 
         $client->request(
             'POST',
-            '/data/notes',
+            '/api/notes',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
@@ -67,7 +67,7 @@ class DataCreateControllerTest extends WebTestCase
 
         $client->request(
             'POST',
-            '/data/notes',
+            '/api/notes',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],

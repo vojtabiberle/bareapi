@@ -7,9 +7,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class HomeController
 {
-    public function __construct(private string $projectDir)
-    {
-    }
+    public function __construct(private string $projectDir) {}
 
     #[Route('/', name: 'home', methods: ['GET'])]
     public function __invoke(): Response
@@ -23,16 +21,16 @@ class HomeController
         $html .= '<h1>BareAPI</h1>';
         $html .= '<h2>Available Schemas</h2><ul>';
         foreach ($types as $type) {
-            $html .= sprintf('<li><a href="/data/%s">%s</a></li>', htmlspecialchars($type), htmlspecialchars($type));
+            $html .= sprintf('<li><a href="/api/%s">%s</a></li>', htmlspecialchars($type), htmlspecialchars($type));
         }
         $html .= '</ul>';
 
         $html .= '<h2>Generic CRUD Endpoints</h2><ul>';
-        $html .= '<li>GET    /data/{type}</li>';
-        $html .= '<li>POST   /data/{type}</li>';
-        $html .= '<li>GET    /data/{type}/{id}</li>';
-        $html .= '<li>PUT    /data/{type}/{id}</li>';
-        $html .= '<li>DELETE /data/{type}/{id}</li>';
+        $html .= '<li>GET    /api/{type}</li>';
+        $html .= '<li>POST   /api/{type}</li>';
+        $html .= '<li>GET    /api/{type}/{id}</li>';
+        $html .= '<li>PUT    /api/{type}/{id}</li>';
+        $html .= '<li>DELETE /api/{type}/{id}</li>';
         $html .= '</ul>';
 
         $html .= '<p>You can also apply simple filtering on the collection endpoint via query parameters, e.g. <code>?field=value</code>.</p>';

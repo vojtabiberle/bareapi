@@ -15,7 +15,7 @@ The application follows the Model-View-Controller (MVC) pattern and a layered ar
 - **Entity:** All data is stored in a single table via [`MetaObject.php`](src/Entity/MetaObject.php:1).
 - **Repository:** Data persistence and querying logic in [`MetaObjectRepository.php`](src/Repository/MetaObjectRepository.php:1).
 - **JSON Schemas:** Define object types and validation rules in [`config/schemas/`](config/schemas/).
-- **Routing:** Dynamic routes declared in [`config/routes/data.yaml`](config/routes/data.yaml:1).
+- **Routing:** Defined via PHP attributes in the controllers.
 - **Configuration:** Service wiring and autoloading in [`config/services.yaml`](config/services.yaml:1) and [`composer.json`](composer.json:1).
 
 ## 4. Data Flow
@@ -36,7 +36,6 @@ graph LR
 - **src/Entity:** Contains the `MetaObject` entity.
 - **src/Repository:** Contains the `MetaObjectRepository`.
 - **config/schemas:** JSON Schema files for each object type.
-- **config/routes:** Route definitions, especially `data.yaml` for dynamic endpoints.
 - **public:** Web entry point (`index.php`).
 - **tests:** Unit and functional tests for controllers and features.
 - **docs:** Project documentation.
@@ -44,18 +43,18 @@ graph LR
 ## 6. CRUD Agents (Controllers)
 
 Each CRUD operation is handled by a dedicated controller:
-- [`DataCreateController`](src/Controller/DataCreateController.php:1): `POST /data/{type}`
-- [`DataDeleteController`](src/Controller/DataDeleteController.php:1): `DELETE /data/{type}/{id}`
-- [`DataListController`](src/Controller/DataListController.php:1): `GET /data/{type}`
-- [`DataShowController`](src/Controller/DataShowController.php:1): `GET /data/{type}/{id}`
-- [`DataUpdateController`](src/Controller/DataUpdateController.php:1): `PUT /data/{type}/{id}`
+- [`DataCreateController`](src/Controller/DataCreateController.php:1): `POST /api/{type}`
+- [`DataDeleteController`](src/Controller/DataDeleteController.php:1): `DELETE /api/{type}/{id}`
+- [`DataListController`](src/Controller/DataListController.php:1): `GET /api/{type}`
+- [`DataShowController`](src/Controller/DataShowController.php:1): `GET /api/{type}/{id}`
+- [`DataUpdateController`](src/Controller/DataUpdateController.php:1): `PUT /api/{type}/{id}`
 - [`HomeController`](src/Controller/HomeController.php:1): `/` root endpoint
 
 Controllers use the repository and validate data against the relevant JSON Schema before persistence.
 
 ## 7. Dynamic Routing
 
-Routes are declared once in `config/routes/data.yaml` using wildcards. Adding a new schema file immediately exposes new endpoints.
+Routes are defined directly in the controller classes using PHP attributes. This approach co-locates the route definition with its implementation.
 
 ## 8. Validation Pipeline
 
@@ -65,7 +64,7 @@ Controllers load the relevant JSON Schema and validate incoming data using `just
 
 1. Add a JSON Schema to `config/schemas/{newtype}.json`.
 2. (Optionally) define a `version` in your schema.
-3. Use the REST endpoints `/data/{newtype}` and `/data/{newtype}/{id}`—no code changes required.
+3. Use the REST endpoints `/api/{newtype}` and `/api/{newtype}/{id}`—no code changes required.
 
 ## 10. Dependencies
 

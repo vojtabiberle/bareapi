@@ -20,7 +20,7 @@ class DataDeleteControllerTest extends WebTestCase
         ];
         $client->request(
             'POST',
-            '/data/notes',
+            '/api/notes',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
@@ -34,18 +34,18 @@ class DataDeleteControllerTest extends WebTestCase
         $this->assertIsString($created['id'], 'Created id is not a string');
 
         // Delete the note
-        $client->request('DELETE', '/data/notes/' . $created['id']);
+        $client->request('DELETE', '/api/notes/' . $created['id']);
         $this->assertResponseStatusCodeSame(204);
 
         // Confirm deletion
-        $client->request('GET', '/data/notes/' . $created['id']);
+        $client->request('GET', '/api/notes/' . $created['id']);
         $this->assertResponseStatusCodeSame(404);
     }
 
     public function testDeleteNoteNotFound(): void
     {
         $client = static::createClient();
-        $client->request('DELETE', '/data/notes/00000000-0000-0000-0000-000000000000');
+        $client->request('DELETE', '/api/notes/00000000-0000-0000-0000-000000000000');
         $this->assertResponseStatusCodeSame(404);
     }
 }

@@ -1,0 +1,59 @@
+<?php
+
+namespace Bareapi\EventListener;
+
+use Symfony\Component\HttpKernel\Event\ExceptionEvent;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
+
+class ExceptionListener
+{
+    private string $kernelEnvironment;
+
+    public function __construct(string $kernelEnvironment)
+    {
+        $this->kernelEnvironment = $kernelEnvironment;
+    }
+
+    public function onKernelException(ExceptionEvent $event): void
+    {
+        $request = $event->getRequest();
+        $path = $request->getPathInfo();
+
+        if (strpos($path, '/api/') !== 0) {
+            // Not an API route, let default exception handling proceed
+            return;
+        }
+
+        $exception = $event->getThrowable();
+        $statusCode = 500;
+
+        if ($exception instanceof HttpExceptionInterface) {
+            $statusCode = $exception->getStatusCode();
+        }
+
+        if ($this->kernelEnvironment === 'dev') {
+            $message = sprintf(
+                '%s: %s in %s:%d%sStack trace:%s%s',
+                get_class($exception),
+                $exception->getMessage(),
+                $exception->getFile(),
+                $exception->getLine(),
+                PHP_EOL,
+                PHP_EOL,
+                $exception->getTraceAsString()
+            );
+        } else {
+            $message = 'An internal server error occurred.';
+        }
+
+        $payload = [
+            'status' => 'error',
+            'code' => $statusCode,
+            'message' => $message,
+        ];
+
+        $response = new JsonResponse($payload, $statusCode);
+        $event->setResponse($response);
+    }
+}

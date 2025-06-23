@@ -20,7 +20,7 @@ class DataShowControllerTest extends WebTestCase
         ];
         $client->request(
             'POST',
-            '/data/notes',
+            '/api/notes',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
@@ -34,7 +34,7 @@ class DataShowControllerTest extends WebTestCase
         $this->assertIsString($created['id'], 'Created id is not a string');
 
         // Now, retrieve the note
-        $client->request('GET', '/data/notes/' . $created['id']);
+        $client->request('GET', '/api/notes/' . $created['id']);
         $this->assertResponseIsSuccessful();
         $content = $client->getResponse()->getContent();
         $response = json_decode(is_string($content) ? $content : '', true);
@@ -48,7 +48,7 @@ class DataShowControllerTest extends WebTestCase
     public function testShowNoteNotFound(): void
     {
         $client = static::createClient();
-        $client->request('GET', '/data/notes/00000000-0000-0000-0000-000000000000');
+        $client->request('GET', '/api/notes/00000000-0000-0000-0000-000000000000');
         $this->assertResponseStatusCodeSame(404);
     }
 }

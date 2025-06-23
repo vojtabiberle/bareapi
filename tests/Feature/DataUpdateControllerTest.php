@@ -20,7 +20,7 @@ class DataUpdateControllerTest extends WebTestCase
         ];
         $client->request(
             'POST',
-            '/data/notes',
+            '/api/notes',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
@@ -30,9 +30,9 @@ class DataUpdateControllerTest extends WebTestCase
         $content = $client->getResponse()->getContent();
         $created = json_decode(is_string($content) ? $content : '', true);
         $this->assertIsArray($created, 'Created response is not a valid array');
-        $this->assertArrayHasKey('id', $created, 'POST /data/notes did not return an id');
+        $this->assertArrayHasKey('id', $created, 'POST /api/notes did not return an id');
         $this->assertIsString($created['id'], 'Created id is not a string');
-        $this->assertArrayHasKey('data', $created, 'POST /data/notes did not return a data object');
+        $this->assertArrayHasKey('data', $created, 'POST /api/notes did not return a data object');
         $this->assertIsArray($created['data'], 'Created data is not a valid array');
 
         // Update the note
@@ -42,7 +42,7 @@ class DataUpdateControllerTest extends WebTestCase
         ];
         $client->request(
             'PUT',
-            '/data/notes/' . $created['id'],
+            '/api/notes/' . $created['id'],
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
@@ -52,7 +52,7 @@ class DataUpdateControllerTest extends WebTestCase
         $content = $client->getResponse()->getContent();
         $updated = json_decode(is_string($content) ? $content : '', true);
         $this->assertIsArray($updated, 'Updated response is not a valid array');
-        $this->assertArrayHasKey('data', $updated, 'PUT /data/notes/{id} did not return a data object');
+        $this->assertArrayHasKey('data', $updated, 'PUT /api/notes/{id} did not return a data object');
         $this->assertIsArray($updated['data'], 'Updated data is not a valid array');
         $this->assertSame('Updated Title', $updated['data']['title']);
         $this->assertSame('Updated Content', $updated['data']['content']);
@@ -67,7 +67,7 @@ class DataUpdateControllerTest extends WebTestCase
         ];
         $client->request(
             'PUT',
-            '/data/notes/00000000-0000-0000-0000-000000000000',
+            '/api/notes/00000000-0000-0000-0000-000000000000',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
@@ -87,7 +87,7 @@ class DataUpdateControllerTest extends WebTestCase
         ];
         $client->request(
             'POST',
-            '/data/notes',
+            '/api/notes',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
@@ -105,7 +105,7 @@ class DataUpdateControllerTest extends WebTestCase
         // Update with invalid data
         $client->request(
             'PUT',
-            '/data/notes/' . $created['id'],
+            '/api/notes/' . $created['id'],
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],

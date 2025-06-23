@@ -25,3 +25,9 @@ services:
             $kernelProjectDir: '%kernel.project_dir%'
 
     JsonSchema\Validator: ~
+
+    Bareapi\EventListener\ExceptionListener:
+            arguments:
+                $kernelEnvironment: '%kernel.environment%'
+            tags:
+                - { name: kernel.event_listener, event: kernel.exception }

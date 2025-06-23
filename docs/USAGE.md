@@ -17,7 +17,7 @@ The `note` resource uses the following schema:
 ### 1. Create a New Note
 
 **Endpoint:**  
-`POST /data/note`
+`POST /api/note`
 
 **Request Body:**
 
@@ -31,7 +31,7 @@ The `note` resource uses the following schema:
 **Example cURL:**
 
 ```bash
-curl -X POST http://localhost:8000/data/note \
+curl -X POST http://localhost:8000/api/note \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Meeting Notes",
@@ -54,12 +54,12 @@ curl -X POST http://localhost:8000/data/note \
 ### 2. Retrieve the Note
 
 **Endpoint:**  
-`GET /data/note/{UUID}`
+`GET /api/note/{UUID}`
 
 **Example cURL:**
 
 ```bash
-curl http://localhost:8000/data/note/018f8e2e-7b6c-7b1a-8e2e-7b6c7b1a8e2e
+curl http://localhost:8000/api/note/018f8e2e-7b6c-7b1a-8e2e-7b6c7b1a8e2e
 ```
 
 **Response Example:**
@@ -77,7 +77,7 @@ curl http://localhost:8000/data/note/018f8e2e-7b6c-7b1a-8e2e-7b6c7b1a8e2e
 ### 3. Update the Note
 
 **Endpoint:**  
-`PUT /data/note/{UUID}`
+`PUT /api/note/{UUID}`
 
 **Request Body:**
 
@@ -91,7 +91,7 @@ curl http://localhost:8000/data/note/018f8e2e-7b6c-7b1a-8e2e-7b6c7b1a8e2e
 **Example cURL:**
 
 ```bash
-curl -X PUT http://localhost:8000/data/note/018f8e2e-7b6c-7b1a-8e2e-7b6c7b1a8e2e \
+curl -X PUT http://localhost:8000/api/note/018f8e2e-7b6c-7b1a-8e2e-7b6c7b1a8e2e \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Updated Meeting Notes",
@@ -114,12 +114,12 @@ curl -X PUT http://localhost:8000/data/note/018f8e2e-7b6c-7b1a-8e2e-7b6c7b1a8e2e
 ### 4. Delete the Note
 
 **Endpoint:**  
-`DELETE /data/note/{UUID}`
+`DELETE /api/note/{UUID}`
 
 **Example cURL:**
 
 ```bash
-curl -X DELETE http://localhost:8000/data/note/018f8e2e-7b6c-7b1a-8e2e-7b6c7b1a8e2e
+curl -X DELETE http://localhost:8000/api/note/018f8e2e-7b6c-7b1a-8e2e-7b6c7b1a8e2e
 ```
 
 **Response Example:**
@@ -203,6 +203,6 @@ To tag an external article, you could use its URL as the `objectId`.
 ---
 ## Summary
 
-- All CRUD operations use `/data/{type}` or `/data/{type}/{UUID}` endpoints.
+- All CRUD operations use `/api/{type}` or `/api/{type}/{UUID}` endpoints.
 - The `note` resource requires a `title` and optionally accepts `content`.
 - All requests and responses use JSON format.
