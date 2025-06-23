@@ -73,7 +73,7 @@ if (!$validator->isValid()) { /* return 422 with errors */ }
 This ensures that only schema-compliant data is persisted.
 
 ### Namespaces & Autoloading
-All PHP code now lives under the `Bareapi\` namespace. Composer PSR-4 is configured in `composer.json`:
+All PHP code in this application uses the `Bareapi\` namespace. Composer PSR-4 is configured in `composer.json`:
 
 ```json
 "autoload": {
@@ -106,15 +106,19 @@ Service auto-wiring is tuned in `config/services.yaml` to discover entities, rep
 
 ## Running commands
 
-Any application commands (e.g. Composer, Symfony console, migrations) should be run inside the PHP "app" container. For example:
+Any application commands (e.g. Composer, Symfony console, migrations, tests, static analysis) must be run inside the PHP "app" container. For example:
 
 ```bash
 docker compose run --rm app composer install
 docker compose run --rm app bin/console doctrine:migrations:migrate
 docker compose run --rm app bin/console cache:clear
+composer test
+composer phpstan
 ```
 
 Other tool commands (Docker Compose itself, git, host‑side utilities) can be run directly on the host.
+
+> **Note:** If an agent wants to run a different Composer or PHP script, it must also be executed inside the container using `docker compose run --rm app ...`.
 
 ### PHPUnit
 
@@ -125,9 +129,14 @@ docker compose run --rm app composer require --dev symfony/test-pack --no-intera
 
 Run the test suite via either the composer helper or directly:
 ```bash
-composer test
+docker compose run --rm app composer test
 # or:
 docker compose run --rm app php bin/phpunit
+```
+
+To run static analysis with PHPStan:
+```bash
+docker compose run --rm app composer phpstan
 ```
 
 New functional tests for REST controllers live in `tests/Controller/DataFunctionalTest.php`, covering create, fetch, update and delete flows against an in-memory SQLite schema.
