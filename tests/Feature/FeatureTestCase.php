@@ -20,5 +20,6 @@ abstract class FeatureTestCase extends WebTestCase
         parent::setUp();
         $this->client = static::createClient();
         // Each test should create its own client to avoid double kernel boot.
+        $this->refreshDatabase();
     }
 }

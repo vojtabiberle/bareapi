@@ -10,73 +10,83 @@ use PHPUnit\Framework\TestCase;
 
 final class SchemaServiceTest extends TestCase
 {
-    private string $fixturesDir;
+    private string $tmpDir;
 
     protected function setUp(): void
     {
-        $this->fixturesDir = __DIR__ . '/fixtures/';
-        if (! is_dir($this->fixturesDir)) {
-            mkdir($this->fixturesDir, 0777, true);
+        $this->tmpDir = sys_get_temp_dir() . '/bareapi_schema_test_' . uniqid();
+        mkdir($this->tmpDir, 0777, true);
+    }
+
+    protected function tearDown(): void
+    {
+        foreach ((array) glob($this->tmpDir . '/*.json') as $file) {
+            if (is_string($file)) {
+                unlink($file);
+            }
         }
-        // Create a test schema file
-        file_put_contents($this->fixturesDir . 'testtype.json', json_encode([
+        rmdir($this->tmpDir);
+    }
+
+    public function testReturnsFilterableFields(): void
+    {
+        $schema = [
             'properties' => [
                 'foo' => [
                     'type' => 'string',
                     'x-filterable' => true,
                 ],
                 'bar' => [
-                    'type' => 'integer',
+                    'type' => 'int',
                 ],
                 'baz' => [
                     'type' => 'string',
                     'x-filterable' => true,
                 ],
             ],
-        ]));
-        file_put_contents($this->fixturesDir . 'nofilter.json', json_encode([
-            'properties' => [
-                'a' => [
-                    'type' => 'string',
-                ],
-                'b' => [
-                    'type' => 'integer',
-                ],
-            ],
-        ]));
-    }
+        ];
+        $json = json_encode($schema);
+        $this->assertIsString($json, 'json_encode failed');
+        file_put_contents($this->tmpDir . '/notes.json', $json);
 
-    protected function tearDown(): void
-    {
-        foreach (['testtype.json', 'nofilter.json'] as $file) {
-            $path = $this->fixturesDir . $file;
-            if (is_file($path)) {
-                unlink($path);
-            }
-        }
-        if (is_dir($this->fixturesDir)) {
-            rmdir($this->fixturesDir);
-        }
-    }
-
-    public function testReturnsFilterableFields(): void
-    {
-        $service = new SchemaService($this->fixturesDir);
-        $fields = $service->getFilterableFields('testtype');
-        $this->assertEqualsCanonicalizing(['foo', 'baz'], $fields);
+        $service = new SchemaService($this->tmpDir);
+        $fields = $service->getFilterableFields('notes');
+        $this->assertSame(['foo', 'baz'], $fields);
     }
 
     public function testReturnsEmptyArrayIfNoFilterableFields(): void
     {
-        $service = new SchemaService($this->fixturesDir);
-        $fields = $service->getFilterableFields('nofilter');
+        $schema = [
+            'properties' => [
+                'foo' => [
+                    'type' => 'string',
+                ],
+                'bar' => [
+                    'type' => 'int',
+                ],
+            ],
+        ];
+        $json = json_encode($schema);
+        $this->assertIsString($json, 'json_encode failed');
+        file_put_contents($this->tmpDir . '/notes.json', $json);
+
+        $service = new SchemaService($this->tmpDir);
+        $fields = $service->getFilterableFields('notes');
         $this->assertSame([], $fields);
     }
 
-    public function testThrowsOnMissingSchema(): void
+    public function testThrowsIfSchemaFileMissing(): void
     {
-        $service = new SchemaService($this->fixturesDir);
+        $service = new SchemaService($this->tmpDir);
         $this->expectException(SchemaNotFoundException::class);
-        $service->getFilterableFields('doesnotexist');
+        $service->getFilterableFields('missing');
+    }
+
+    public function testThrowsIfSchemaFileInvalidJson(): void
+    {
+        file_put_contents($this->tmpDir . '/notes.json', '{invalid json}');
+        $service = new SchemaService($this->tmpDir);
+        $this->expectException(\JsonException::class);
+        $service->getFilterableFields('notes');
     }
 }

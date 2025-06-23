@@ -12,6 +12,8 @@ use Ramsey\Uuid\UuidInterface;
 
 /**
  * @phpstan-type DataArray array<string, mixed>
+ *
+ * @property DataArray $data
  */
 #[ORM\Entity]
 #[ORM\Table(
@@ -34,6 +36,9 @@ class MetaObject implements JsonSerializable
 
     /**
      * @var array<string, mixed>
+     */
+    /**
+     * @var DataArray
      */
     #[ORM\Column(type: 'json', columnDefinition: 'jsonb')]
     private array $data = [];
@@ -76,6 +81,9 @@ class MetaObject implements JsonSerializable
     /**
      * @return array<string, mixed>
      */
+    /**
+     * @return DataArray
+     */
     public function getData(): array
     {
         return $this->data;
@@ -84,12 +92,43 @@ class MetaObject implements JsonSerializable
     /**
      * @param array<string, mixed> $data
      */
-    public function setData(array $data): self
+    /**
+     * Returns a new MetaObject with updated data and updatedAt timestamp.
+     *
+     * @param array<string, mixed> $data
+     */
+    public function withData(array $data): self
+    {
+        $clone = new self(
+            $this->type,
+            $this->schemaVersion,
+            $data
+        );
+        // Copy ID and createdAt from original
+        $reflection = new \ReflectionObject($clone);
+        $idProp = $reflection->getProperty('id');
+        $idProp->setAccessible(true);
+        $idProp->setValue($clone, $this->id);
+
+        $createdAtProp = $reflection->getProperty('createdAt');
+        $createdAtProp->setAccessible(true);
+        $createdAtProp->setValue($clone, $this->createdAt);
+
+        // updatedAt is set to now in constructor
+        return $clone;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function setData(array $data): void
     {
         $this->data = $data;
-        $this->updatedAt = new DateTimeImmutable();
+    }
 
-        return $this;
+    public function setUpdatedAt(\DateTimeImmutable $updatedAt): void
+    {
+        $this->updatedAt = $updatedAt;
     }
 
     public function getCreatedAt(): DateTimeImmutable
@@ -104,6 +143,16 @@ class MetaObject implements JsonSerializable
 
     /**
      * @return array<string, mixed>
+     */
+    /**
+     * @return array{
+     *   id: string,
+     *   type: string,
+     *   schema_version: string,
+     *   data: DataArray,
+     *   created_at: string,
+     *   updated_at: string
+     * }
      */
     public function jsonSerialize(): array
     {

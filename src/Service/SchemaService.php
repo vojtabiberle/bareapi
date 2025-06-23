@@ -6,7 +6,7 @@ namespace Bareapi\Service;
 
 use Bareapi\Exception\SchemaNotFoundException;
 
-final class SchemaService
+final class SchemaService implements SchemaServiceInterface
 {
     private string $schemaDir;
 
@@ -29,17 +29,13 @@ final class SchemaService
             return [];
         }
 
-        $filterable = [];
-        foreach ($schema['properties'] as $field => $definition) {
-            if (
-                is_array($definition)
+        return (array) array_keys(array_filter(
+            $schema['properties'],
+            fn ($definition) =>
+            is_array($definition)
                 && array_key_exists('x-filterable', $definition)
                 && $definition['x-filterable'] === true
-            ) {
-                $filterable[] = $field;
-            }
-        }
-        return $filterable;
+        ));
     }
 
     /**

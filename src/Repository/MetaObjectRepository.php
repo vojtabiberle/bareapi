@@ -7,7 +7,7 @@ namespace Bareapi\Repository;
 use Bareapi\Controller\ControllerUtil;
 use Bareapi\Entity\MetaObject;
 use Bareapi\Exception\InvalidFilterException;
-use Bareapi\Service\SchemaService;
+use Bareapi\Service\SchemaServiceInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 
@@ -20,9 +20,9 @@ class MetaObjectRepository
      */
     private string $entityClass;
 
-    private SchemaService $schemaService;
+    private SchemaServiceInterface $schemaService;
 
-    public function __construct(EntityManagerInterface $em, SchemaService $schemaService)
+    public function __construct(EntityManagerInterface $em, SchemaServiceInterface $schemaService)
     {
         $this->em = $em;
         $this->entityClass = MetaObject::class;

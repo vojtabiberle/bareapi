@@ -32,6 +32,14 @@ trait RefreshDatabaseForWebTestTrait
             $connection->executeStatement('SET session_replication_role = DEFAULT');
 
             $connection->commit();
+            // Clear the EntityManager on both the static container and the current client container (if available)
+            $em->clear();
+            if ($this->client !== null) {
+                $clientEm = $this->client->getContainer()->get(\Doctrine\ORM\EntityManagerInterface::class);
+                if ($clientEm !== $em && $clientEm instanceof \Doctrine\ORM\EntityManagerInterface) {
+                    $clientEm->clear();
+                }
+            }
         } catch (\Throwable $e) {
             $connection->rollBack();
             throw $e;

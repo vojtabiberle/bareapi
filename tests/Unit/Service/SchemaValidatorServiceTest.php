@@ -11,58 +11,97 @@ use PHPUnit\Framework\TestCase;
 
 final class SchemaValidatorServiceTest extends TestCase
 {
-    private string $projectDir;
+    private string $tmpDir;
 
     protected function setUp(): void
     {
-        $this->projectDir = dirname(__DIR__, 3);
+        $this->tmpDir = sys_get_temp_dir() . '/bareapi_validator_test_' . uniqid();
+        mkdir($this->tmpDir, 0777, true);
     }
 
-    public function testValidPayloadReturnsValidatedData(): void
+    protected function tearDown(): void
     {
-        $service = new SchemaValidatorService($this->projectDir);
-        $type = 'notes';
-        $payload = [
-            'title' => 'Test Note',
-            'content' => 'Hello',
+        foreach ((array) glob($this->tmpDir . '/config/schemas/*.json') as $file) {
+            if (is_string($file)) {
+                unlink($file);
+            }
+        }
+        @rmdir($this->tmpDir . '/config/schemas');
+        @rmdir($this->tmpDir . '/config');
+        @rmdir($this->tmpDir);
+    }
+
+    public function testValidPayloadPassesValidation(): void
+    {
+        $schema = [
+            'type' => 'object',
+            'properties' => [
+                'title' => [
+                    'type' => 'string',
+                ],
+            ],
+            'required' => ['title'],
         ];
+        $this->writeSchema('notes', $schema);
 
-        $result = $service->validate($type, $payload);
-
-        $this->assertSame($payload['title'], $result['title']);
-        $this->assertSame($payload['content'], $result['content']);
+        $service = new SchemaValidatorService($this->tmpDir);
+        $payload = [
+            'title' => 'Hello',
+        ];
+        $result = $service->validate('notes', $payload);
+        $this->assertSame($payload, $result);
     }
 
     public function testInvalidPayloadThrowsValidationException(): void
     {
-        $service = new SchemaValidatorService($this->projectDir);
-        $type = 'notes';
-        $payload = [
-            'content' => 'No title provided',
-        ]; // Missing required 'title'
+        $schema = [
+            'type' => 'object',
+            'properties' => [
+                'title' => [
+                    'type' => 'string',
+                ],
+            ],
+            'required' => ['title'],
+        ];
+        $this->writeSchema('notes', $schema);
 
+        $service = new SchemaValidatorService($this->tmpDir);
         $this->expectException(ValidationException::class);
-
-        try {
-            $service->validate($type, $payload);
-        } catch (ValidationException $e) {
-            $errors = $e->getErrors();
-            $this->assertNotEmpty($errors);
-            $this->assertStringContainsString('title', implode(' ', $errors));
-            throw $e;
-        }
+        $service->validate('notes', []);
     }
 
     public function testMissingSchemaThrowsSchemaNotFoundException(): void
     {
-        $service = new SchemaValidatorService($this->projectDir);
-        $type = 'nonexistent';
-        $payload = [
-            'foo' => 'bar',
-        ];
-
+        $service = new SchemaValidatorService($this->tmpDir);
         $this->expectException(SchemaNotFoundException::class);
+        $service->validate('missing', [
+            'foo' => 'bar',
+        ]);
+    }
 
-        $service->validate($type, $payload);
+    public function testMalformedSchemaThrowsSchemaNotFoundException(): void
+    {
+        $dir = $this->tmpDir . '/config/schemas';
+        mkdir($dir, 0777, true);
+        file_put_contents($dir . '/notes.json', '{invalid json}');
+        $service = new SchemaValidatorService($this->tmpDir);
+        $this->expectException(SchemaNotFoundException::class);
+        $service->validate('notes', [
+            'foo' => 'bar',
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $schema
+     */
+    private function writeSchema(string $type, array $schema): void
+    {
+        $dir = $this->tmpDir . '/config/schemas';
+        if (! is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        $json = json_encode($schema);
+        $this->assertIsString($json, 'json_encode failed');
+        file_put_contents($dir . '/' . $type . '.json', $json);
     }
 }

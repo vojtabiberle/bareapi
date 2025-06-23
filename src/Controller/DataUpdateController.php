@@ -53,6 +53,7 @@ class DataUpdateController
         }
 
         $obj->setData(ControllerUtil::toStringKeyedArray($validated));
+        $obj->setUpdatedAt(new \DateTimeImmutable());
         $this->repo->save($obj);
 
         return new JsonResponse($obj);
