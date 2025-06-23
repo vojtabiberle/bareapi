@@ -14,8 +14,7 @@ class DataUpdateController
 {
     public function __construct(
         private MetaObjectRepository $repo,
-        private Validator $validator,
-        private string $kernelProjectDir
+        private \Bareapi\Service\SchemaValidatorService $schemaValidator
     ) {}
 
     #[Route('/api/{type}/{id}', name: 'data_update', methods: ['PUT'])]
@@ -24,36 +23,18 @@ class DataUpdateController
         if (!preg_match('/^[A-Za-z0-9_]+$/', $type)) {
             return new JsonResponse(['error' => 'Invalid type'], 400);
         }
-        $payload = json_decode($request->getContent());
-        if (is_object($payload) && property_exists($payload, 'type')) {
-            if (!is_string($payload->type) || !preg_match('/^[A-Za-z0-9_]+$/', $payload->type)) {
-                return new JsonResponse(['error' => 'Invalid type'], 400);
-            }
+        $payloadRaw = json_decode($request->getContent(), true);
+        /** @var array<string, mixed> $payload */
+        $payload = is_array($payloadRaw) ? $payloadRaw : [];
+        if (isset($payload['type']) && (!is_string($payload['type']) || !preg_match('/^[A-Za-z0-9_]+$/', $payload['type']))) {
+            return new JsonResponse(['error' => 'Invalid type'], 400);
         }
-        $schemaFile = sprintf('%s/config/schemas/%s.json', $this->kernelProjectDir, $type);
-
-        if (!file_exists($schemaFile)) {
-            return new JsonResponse(['error' => 'Unknown type'], 400);
-        }
-
-        $schema = json_decode((string) file_get_contents($schemaFile));
-        $this->validator->validate($payload, $schema, Constraint::CHECK_MODE_APPLY_DEFAULTS);
-
-        if (!$this->validator->isValid()) {
-            $errors = array_map(
-                /**
-                 * @param mixed $e
-                 */
-                fn($e) => is_array($e)
-                    ? sprintf(
-                        '[%s] %s',
-                        array_key_exists('property', $e) ? ControllerUtil::toStringSafe($e['property']) : '',
-                        array_key_exists('message', $e) ? ControllerUtil::toStringSafe($e['message']) : ''
-                    )
-                    : '',
-                (array) $this->validator->getErrors()
-            );
-            return new JsonResponse(['errors' => $errors], 422);
+        try {
+            $validated = $this->schemaValidator->validate($type, $payload);
+        } catch (\Bareapi\Exception\SchemaNotFoundException $e) {
+            return new JsonResponse(['error' => 'Unknown type'], 404);
+        } catch (\Bareapi\Exception\ValidationException $e) {
+            return new JsonResponse(['errors' => $e->getErrors()], 422);
         }
 
         $obj = $this->repo->find($id);
@@ -61,7 +42,7 @@ class DataUpdateController
             return new JsonResponse(['error' => 'Not found'], 404);
         }
 
-        $obj->setData(ControllerUtil::toStringKeyedArray((array)$payload));
+        $obj->setData(ControllerUtil::toStringKeyedArray($validated));
         $this->repo->save($obj);
 
         return new JsonResponse($obj);

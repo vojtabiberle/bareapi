@@ -15,8 +15,7 @@ class DataCreateController
 {
     public function __construct(
         private MetaObjectRepository $repo,
-        private Validator $validator,
-        private string $kernelProjectDir
+        private \Bareapi\Service\SchemaValidatorService $schemaValidator
     ) {}
 
     #[Route('/api/{type}', name: 'data_create', methods: ['POST'])]
@@ -25,42 +24,28 @@ class DataCreateController
         if (!preg_match('/^[A-Za-z0-9_]+$/', $type)) {
             return new JsonResponse(['error' => 'Invalid type'], 400);
         }
-        $payload = json_decode($request->getContent());
-        if (is_object($payload) && property_exists($payload, 'type')) {
-            if (!is_string($payload->type) || !preg_match('/^[A-Za-z0-9_]+$/', $payload->type)) {
-                return new JsonResponse(['error' => 'Invalid type'], 400);
-            }
+        $payloadRaw = json_decode($request->getContent(), true);
+        /** @var array<string, mixed> $payload */
+        $payload = is_array($payloadRaw) ? $payloadRaw : [];
+        if (isset($payload['type']) && (!is_string($payload['type']) || !preg_match('/^[A-Za-z0-9_]+$/', $payload['type']))) {
+            return new JsonResponse(['error' => 'Invalid type'], 400);
         }
-        $schemaFile = sprintf('%s/config/schemas/%s.json', $this->kernelProjectDir, $type);
-
-        if (!file_exists($schemaFile)) {
-            return new JsonResponse(['error' => 'Unknown type'], 400);
+        try {
+            $validated = $this->schemaValidator->validate($type, $payload);
+        } catch (\Bareapi\Exception\SchemaNotFoundException $e) {
+            return new JsonResponse(['error' => 'Unknown type'], 404);
+        } catch (\Bareapi\Exception\ValidationException $e) {
+            return new JsonResponse(['errors' => $e->getErrors()], 422);
         }
 
-        $schema = json_decode((string) file_get_contents($schemaFile));
-        $this->validator->validate($payload, $schema, Constraint::CHECK_MODE_APPLY_DEFAULTS);
-
-        if (!$this->validator->isValid()) {
-            $errors = array_map(
-                /**
-                 * @param mixed $e
-                 */
-                fn($e) => is_array($e)
-                    ? sprintf(
-                        '[%s] %s',
-                        array_key_exists('property', $e) ? ControllerUtil::toStringSafe($e['property']) : '',
-                        array_key_exists('message', $e) ? ControllerUtil::toStringSafe($e['message']) : ''
-                    )
-                    : '',
-                (array) $this->validator->getErrors()
-            );
-            return new JsonResponse(['errors' => $errors], 422);
-        }
+        $version = isset($validated['version']) && is_string($validated['version'])
+            ? ControllerUtil::toStringSafe($validated['version'])
+            : '1.0';
 
         $obj = new MetaObject(
             $type,
-            (is_object($schema) && isset($schema->version)) ? ControllerUtil::toStringSafe($schema->version) : '1.0',
-            ControllerUtil::toStringKeyedArray((array)$payload)
+            $version,
+            ControllerUtil::toStringKeyedArray($validated)
         );
         $this->repo->save($obj);
 

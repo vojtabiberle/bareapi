@@ -16,13 +16,6 @@ services:
         resource: '../src/Controller'
         tags: ['controller.service_arguments']
 
-    Bareapi\Controller\DataCreateController:
-        arguments:
-            $kernelProjectDir: '%kernel.project_dir%'
-
-    Bareapi\Controller\DataUpdateController:
-        arguments:
-            $kernelProjectDir: '%kernel.project_dir%'
 
     JsonSchema\Validator: ~
 

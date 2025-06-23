@@ -4,11 +4,6 @@ This plan categorizes findings by priority and provides clear, actionable steps 
 
 ## ⚠️ High
 
-### Issue: Code Duplication in Schema Loading and Validation
-- **Location:** [`src/Controller/DataCreateController.php`](src/Controller/DataCreateController.php:25-56), [`src/Controller/DataUpdateController.php`](src/Controller/DataUpdateController.php:24-56)
-- **Recommendation:** Refactor schema loading and validation into a shared service. Inject and reuse this service in all controllers.
-- **Rationale:** Reduces maintenance burden, risk of inconsistencies, and improves testability.
-
 ### Issue: Inefficient JSON Field Filtering
 - **Location:** [`src/Repository/MetaObjectRepository.php`](src/Repository/MetaObjectRepository.php:49-62)
 - **Recommendation:** Add database indexes for frequently queried JSON fields or consider schema evolution for high-traffic object types. Limit allowed filters and validate filter keys.

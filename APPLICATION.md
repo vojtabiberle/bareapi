@@ -147,15 +147,13 @@ docker compose run --rm app composer require --dev symfony/test-pack --no-intera
 Run the test suite using the Composer helper or directly:
 
 ```bash
-docker compose run --rm app composer test
-# or:
-docker compose run --rm app php bin/phpunit
+docker compose run --rm app composer test-local
 ```
 
 To run static analysis with PHPStan:
 
 ```bash
-docker compose run --rm app composer phpstan
+docker compose run --rm app composer phpstan-local
 ```
 
 Functional tests for REST controllers are located in [`tests/Feature/DataCreateControllerTest.php`](tests/Feature/DataCreateControllerTest.php:1), [`tests/Feature/DataShowControllerTest.php`](tests/Feature/DataShowControllerTest.php:1), [`tests/Feature/DataUpdateControllerTest.php`](tests/Feature/DataUpdateControllerTest.php:1), and [`tests/Feature/DataDeleteControllerTest.php`](tests/Feature/DataDeleteControllerTest.php:1), covering create, fetch, update, and delete flows against an in-memory SQLite schema.
