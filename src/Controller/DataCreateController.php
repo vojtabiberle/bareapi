@@ -22,6 +22,9 @@ class DataCreateController
     #[Route('/api/{type}', name: 'data_create', methods: ['POST'])]
     public function __invoke(string $type, Request $request): JsonResponse
     {
+        if (!preg_match('/^[A-Za-z0-9_]+$/', $type)) {
+            return new JsonResponse(['error' => 'Invalid type'], 400);
+        }
         $payload = json_decode($request->getContent());
         $schemaFile = sprintf('%s/config/schemas/%s.json', $this->kernelProjectDir, $type);
 

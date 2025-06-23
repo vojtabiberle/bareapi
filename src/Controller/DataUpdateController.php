@@ -21,6 +21,9 @@ class DataUpdateController
     #[Route('/api/{type}/{id}', name: 'data_update', methods: ['PUT'])]
     public function __invoke(string $type, string $id, Request $request): JsonResponse
     {
+        if (!preg_match('/^[A-Za-z0-9_]+$/', $type)) {
+            return new JsonResponse(['error' => 'Invalid type'], 400);
+        }
         $payload = json_decode($request->getContent());
         $schemaFile = sprintf('%s/config/schemas/%s.json', $this->kernelProjectDir, $type);
 
