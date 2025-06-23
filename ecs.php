@@ -13,7 +13,15 @@ return static function (ECSConfig $ecsConfig): void {
 
     $ecsConfig->sets([
         SetList::PSR_12,
-        SetList::COMMON,
         SetList::CLEAN_CODE,
+        SetList::ARRAY,
+        SetList::COMMON,
+        SetList::COMMENTS,
+        SetList::CONTROL_STRUCTURES,
+        SetList::DOCBLOCK,
+        SetList::NAMESPACES,
+        SetList::PHPUNIT,
+        SetList::SPACES,
+        SetList::STRICT,
     ]);
 };

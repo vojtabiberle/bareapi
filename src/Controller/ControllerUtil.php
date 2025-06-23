@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bareapi\Controller;
 
 final class ControllerUtil

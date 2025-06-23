@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bareapi\Tests\Feature;
 
 class HomeControllerTest extends FeatureTestCase
