@@ -67,6 +67,12 @@ jobs:
     - name: Run Tests
       run: vendor/bin/phpunit --configuration phpunit.xml.dist --coverage-clover build/logs/clover.xml
 
+    - name: Run PHPStan (static analysis)
+      run: composer phpstan-local
+
+    - name: Run ECS (code style)
+      run: composer ecs-local
+
     - name: Upload coverage reports
       uses: actions/upload-artifact@v4
       with:
