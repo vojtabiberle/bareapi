@@ -23,16 +23,18 @@ jobs:
         ports:
           - 5432:5432
         env:
-          POSTGRES_DB: bareapi
+          POSTGRES_DB: bareapi_test
           POSTGRES_USER: bareapi
           POSTGRES_PASSWORD: bareapi
         options: >-
-          --health-cmd="pg_isready -U bareapi -d bareapi" --health-interval=10s --health-timeout=5s --health-retries=5
+          --health-cmd="pg_isready -U bareapi -d bareapi_test" --health-interval=10s --health-timeout=5s --health-retries=5
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
         php-version: ['8.3']
+    env:
+      DATABASE_URL: postgresql://bareapi:bareapi@127.0.0.1:5432/bareapi_test?serverVersion=17&charset=utf8
 
     steps:
     - name: Checkout code
