@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Bareapi\Service;
 
-use Bareapi\Exception\ValidationException;
 use Bareapi\Exception\SchemaNotFoundException;
-use JsonSchema\Validator as JsonSchemaValidator;
+use Bareapi\Exception\ValidationException;
 use JsonSchema\Constraints\Constraint;
+use JsonSchema\Validator as JsonSchemaValidator;
 
 final class SchemaValidatorService
 {
@@ -19,7 +19,6 @@ final class SchemaValidatorService
     }
 
     /**
-     * @param string $type
      * @param array<string, mixed> $payload
      * @return array<string, mixed>
      * @throws ValidationException
@@ -28,11 +27,11 @@ final class SchemaValidatorService
     public function validate(string $type, array $payload): array
     {
         $schemaPath = $this->projectDir . '/config/schemas/' . $type . '.json';
-        if (!file_exists($schemaPath)) {
+        if (! file_exists($schemaPath)) {
             throw new SchemaNotFoundException($type);
         }
 
-        $schemaData = json_decode((string)file_get_contents($schemaPath));
+        $schemaData = json_decode((string) file_get_contents($schemaPath));
         if ($schemaData === null) {
             throw new SchemaNotFoundException($type);
         }
@@ -43,20 +42,24 @@ final class SchemaValidatorService
 
         $validator->validate($payloadObj, $schemaData, Constraint::CHECK_MODE_APPLY_DEFAULTS);
 
-        if (!$validator->isValid()) {
+        if (! $validator->isValid()) {
             $errors = [];
             $errorList = $validator->getErrors();
-            if (!is_iterable($errorList)) {
-                throw new ValidationException(['errors' => ['Unknown validation error']]);
+            if (! is_iterable($errorList)) {
+                throw new ValidationException([
+                    'errors' => ['Unknown validation error'],
+                ]);
             }
             foreach ($errorList as $error) {
                 if (is_array($error)) {
                     $property = isset($error['property']) && is_string($error['property']) ? $error['property'] : '';
                     $message = isset($error['message']) && is_string($error['message']) ? $error['message'] : '';
-                    $errors[] = ($property !== '' ? "[$property] " : '') . $message;
+                    $errors[] = ($property !== '' ? "[{$property}] " : '') . $message;
                 }
             }
-            $errorArray = ['errors' => $errors];
+            $errorArray = [
+                'errors' => $errors,
+            ];
             throw new ValidationException($errorArray);
         }
 

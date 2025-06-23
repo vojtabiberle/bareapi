@@ -2,9 +2,9 @@
 
 namespace Bareapi\Tests\Integration;
 
+use Bareapi\Tests\RefreshDatabaseForKernelTestTrait;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Routing\RouterInterface;
-use Bareapi\Tests\RefreshDatabaseForKernelTestTrait;
 
 class DataControllerTest extends KernelTestCase
 {

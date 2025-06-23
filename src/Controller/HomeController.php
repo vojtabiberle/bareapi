@@ -7,14 +7,17 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class HomeController
 {
-    public function __construct(private string $projectDir) {}
+    public function __construct(
+        private string $projectDir
+    ) {
+    }
 
     #[Route('/', name: 'home', methods: ['GET'])]
     public function __invoke(): Response
     {
         $schemaDir = $this->projectDir . '/config/schemas';
         $files = glob($schemaDir . '/*.json') ?: [];
-        $types = array_map(fn(string $f): string => basename($f, '.json'), $files);
+        $types = array_map(fn (string $f): string => basename($f, '.json'), $files);
 
         $html = '<!DOCTYPE html>';
         $html .= '<html lang="en"><head><meta charset="utf-8"><title>BareAPI</title></head><body>';

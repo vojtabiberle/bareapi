@@ -2,15 +2,18 @@
 
 namespace Bareapi\Repository;
 
+use Bareapi\Controller\ControllerUtil;
 use Bareapi\Entity\MetaObject;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
-use Bareapi\Controller\ControllerUtil;
 
 class MetaObjectRepository
 {
     private EntityManagerInterface $em;
-    /** @var class-string<MetaObject> */
+
+    /**
+     * @var class-string<MetaObject>
+     */
     private string $entityClass;
 
     public function __construct(EntityManagerInterface $em)
@@ -19,9 +22,6 @@ class MetaObjectRepository
         $this->entityClass = MetaObject::class;
     }
 
-    /**
-     * @return MetaObject|null
-     */
     public function find(string $id): ?MetaObject
     {
         $obj = $this->em->find($this->entityClass, $id);
@@ -38,7 +38,7 @@ class MetaObjectRepository
             ->getResult();
         return array_values(array_filter(
             is_array($result) ? $result : [],
-            fn($item) => $item instanceof \Bareapi\Entity\MetaObject
+            fn ($item) => $item instanceof \Bareapi\Entity\MetaObject
         ));
     }
 
@@ -50,14 +50,14 @@ class MetaObjectRepository
     {
         $qb = $this->createTypeQueryBuilder($type);
         foreach ($filters as $key => $value) {
-            $qb->andWhere("m.data->> :field = :val")
+            $qb->andWhere('m.data->> :field = :val')
                 ->setParameter('field', $key)
                 ->setParameter('val', ControllerUtil::toStringSafe($value));
         }
         $result = $qb->getQuery()->getResult();
         return array_values(array_filter(
             is_array($result) ? $result : [],
-            fn($item) => $item instanceof \Bareapi\Entity\MetaObject
+            fn ($item) => $item instanceof \Bareapi\Entity\MetaObject
         ));
     }
 

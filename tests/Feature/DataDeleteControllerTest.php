@@ -2,8 +2,8 @@
 
 namespace Bareapi\Tests\Feature;
 
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Bareapi\Tests\RefreshDatabaseForWebTestTrait;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class DataDeleteControllerTest extends WebTestCase
 {
@@ -16,14 +16,16 @@ class DataDeleteControllerTest extends WebTestCase
         // Create a note
         $payload = [
             'title' => 'Delete Me',
-            'content' => 'To be deleted'
+            'content' => 'To be deleted',
         ];
         $client->request(
             'POST',
             '/api/notes',
             [],
             [],
-            ['CONTENT_TYPE' => 'application/json'],
+            [
+                'CONTENT_TYPE' => 'application/json',
+            ],
             is_string(json_encode($payload)) ? json_encode($payload) : null
         );
         $this->assertResponseStatusCodeSame(201);

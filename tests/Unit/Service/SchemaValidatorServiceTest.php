@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Bareapi\Tests\Unit\Service;
 
-use PHPUnit\Framework\TestCase;
-use Bareapi\Service\SchemaValidatorService;
-use Bareapi\Exception\ValidationException;
 use Bareapi\Exception\SchemaNotFoundException;
+use Bareapi\Exception\ValidationException;
+use Bareapi\Service\SchemaValidatorService;
+use PHPUnit\Framework\TestCase;
 
 final class SchemaValidatorServiceTest extends TestCase
 {
@@ -22,7 +22,10 @@ final class SchemaValidatorServiceTest extends TestCase
     {
         $service = new SchemaValidatorService($this->projectDir);
         $type = 'notes';
-        $payload = ['title' => 'Test Note', 'content' => 'Hello'];
+        $payload = [
+            'title' => 'Test Note',
+            'content' => 'Hello',
+        ];
 
         $result = $service->validate($type, $payload);
 
@@ -34,7 +37,9 @@ final class SchemaValidatorServiceTest extends TestCase
     {
         $service = new SchemaValidatorService($this->projectDir);
         $type = 'notes';
-        $payload = ['content' => 'No title provided']; // Missing required 'title'
+        $payload = [
+            'content' => 'No title provided',
+        ]; // Missing required 'title'
 
         $this->expectException(ValidationException::class);
 
@@ -52,7 +57,9 @@ final class SchemaValidatorServiceTest extends TestCase
     {
         $service = new SchemaValidatorService($this->projectDir);
         $type = 'nonexistent';
-        $payload = ['foo' => 'bar'];
+        $payload = [
+            'foo' => 'bar',
+        ];
 
         $this->expectException(SchemaNotFoundException::class);
 

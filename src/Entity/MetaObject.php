@@ -2,12 +2,11 @@
 
 namespace Bareapi\Entity;
 
-use Bareapi\Repository\MetaObjectRepository;
 use DateTimeImmutable;
+use Doctrine\ORM\Mapping as ORM;
 use JsonSerializable;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
-use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @phpstan-type DataArray array<string, mixed>

@@ -1,7 +1,8 @@
 <?php
+
 // Debug: Output current APP_ENV to verify test environment
 $appEnv = $_SERVER['APP_ENV'] ?? getenv('APP_ENV');
-fwrite(STDERR, "APP_ENV=" . (is_string($appEnv) ? $appEnv : '') . PHP_EOL);
+fwrite(STDERR, 'APP_ENV=' . (is_string($appEnv) ? $appEnv : '') . PHP_EOL);
 
 use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\Filesystem\Filesystem;

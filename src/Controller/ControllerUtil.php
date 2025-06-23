@@ -6,12 +6,11 @@ final class ControllerUtil
 {
     /**
      * @param array<mixed> $array
-     * @return bool
      */
     public static function isStringKeyedArray(array $array): bool
     {
         foreach (array_keys($array) as $key) {
-            if (!is_string($key)) {
+            if (! is_string($key)) {
                 return false;
             }
         }
@@ -20,7 +19,6 @@ final class ControllerUtil
 
     /**
      * @param mixed $value
-     * @return string
      */
     public static function toStringSafe($value): string
     {
@@ -28,7 +26,7 @@ final class ControllerUtil
             return $value;
         }
         if (is_int($value) || is_float($value)) {
-            return (string)$value;
+            return (string) $value;
         }
         if (is_bool($value)) {
             return $value ? '1' : '0';
@@ -43,7 +41,7 @@ final class ControllerUtil
      */
     public static function toStringKeyedArray($array): array
     {
-        if (!is_array($array)) {
+        if (! is_array($array)) {
             return [];
         }
         $result = [];

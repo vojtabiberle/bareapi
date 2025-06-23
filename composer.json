@@ -42,7 +42,8 @@
         "symfony/browser-kit": "^7.3",
         "symfony/css-selector": "^7.3",
         "symfony/http-client": "^7.3",
-        "phpstan/phpstan": "^2.1"
+        "phpstan/phpstan": "^2.1",
+        "symplify/easy-coding-standard": "^12.0"
     },
     "config": {
         "allow-plugins": {
@@ -64,6 +65,10 @@
         "test-local": "APP_ENV=test APP_DEBUG=0 vendor/bin/phpunit --configuration phpunit.xml.dist",
         "test": "docker-compose run -e APP_ENV=test -e APP_DEBUG=0 --rm app vendor/bin/phpunit --configuration phpunit.xml.dist",
         "phpstan-local": "phpstan analyse src tests --level max",
-        "phpstan": "docker-compose run --rm app vendor/bin/phpstan analyse src tests --level max"
+        "phpstan": "docker-compose run --rm app vendor/bin/phpstan analyse src tests --level max",
+        "ecs-local": "vendor/bin/ecs check src tests",
+        "ecs": "docker-compose run --rm app vendor/bin/ecs check src tests",
+        "ecsfix-local": "vendor/bin/ecs check src tests --fix",
+        "ecsfix": "docker-compose run --rm app vendor/bin/ecs check src tests --fix"
     }
 }

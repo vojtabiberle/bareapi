@@ -259,6 +259,7 @@ Following PSR-12 makes the code more consistent, predictable, and easier to navi
 1. **Write a failing test:** Begin by writing a PHPUnit test that defines the desired behavior.
 2. **Write the simplest code to pass the test:** Implement only what is necessary.
 3. **Refactor:** Refine the code with the safety net of passing tests.
+4. **Fix Styling:** Run ECS to ensure code style consistency.
 
 ### TDD Example Workflow
 

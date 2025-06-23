@@ -2,8 +2,8 @@
 
 namespace Bareapi\Tests\Feature;
 
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Bareapi\Tests\RefreshDatabaseForWebTestTrait;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class DataCreateControllerTest extends WebTestCase
 {
@@ -14,7 +14,7 @@ class DataCreateControllerTest extends WebTestCase
         $client = static::createClient();
         $payload = [
             'title' => 'Meeting Notes',
-            'content' => 'Discuss project milestones and deadlines.'
+            'content' => 'Discuss project milestones and deadlines.',
         ];
 
         $client->request(
@@ -22,7 +22,9 @@ class DataCreateControllerTest extends WebTestCase
             '/api/notes',
             [],
             [],
-            ['CONTENT_TYPE' => 'application/json'],
+            [
+                'CONTENT_TYPE' => 'application/json',
+            ],
             is_string(json_encode($payload)) ? json_encode($payload) : null
         );
 
@@ -41,7 +43,7 @@ class DataCreateControllerTest extends WebTestCase
     {
         $client = static::createClient();
         $payload = [
-            'content' => 'No title provided'
+            'content' => 'No title provided',
         ];
 
         $client->request(
@@ -49,7 +51,9 @@ class DataCreateControllerTest extends WebTestCase
             '/api/notes',
             [],
             [],
-            ['CONTENT_TYPE' => 'application/json'],
+            [
+                'CONTENT_TYPE' => 'application/json',
+            ],
             is_string(json_encode($payload)) ? json_encode($payload) : null
         );
 
@@ -70,19 +74,22 @@ class DataCreateControllerTest extends WebTestCase
             '/api/notes',
             [],
             [],
-            ['CONTENT_TYPE' => 'application/json'],
+            [
+                'CONTENT_TYPE' => 'application/json',
+            ],
             '{invalid_json}'
         );
 
         $this->assertResponseStatusCodeSame(422);
     }
+
     public function testValidationErrorWhenTypeIsInvalid(): void
     {
         $client = static::createClient();
         $payload = [
             'title' => 'Invalid Type',
             'content' => 'This should fail.',
-            'type' => 'invalid-type'
+            'type' => 'invalid-type',
         ];
 
         $client->request(
@@ -90,7 +97,9 @@ class DataCreateControllerTest extends WebTestCase
             '/api/notes',
             [],
             [],
-            ['CONTENT_TYPE' => 'application/json'],
+            [
+                'CONTENT_TYPE' => 'application/json',
+            ],
             is_string(json_encode($payload)) ? json_encode($payload) : null
         );
 
@@ -98,6 +107,8 @@ class DataCreateControllerTest extends WebTestCase
         $content = $client->getResponse()->getContent();
         $response = json_decode(is_string($content) ? $content : '', true);
         $this->assertIsArray($response, 'Response is not a valid array');
-        $this->assertSame(['error' => 'Invalid type'], $response);
+        $this->assertSame([
+            'error' => 'Invalid type',
+        ], $response);
     }
 }

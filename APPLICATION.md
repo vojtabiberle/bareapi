@@ -130,6 +130,8 @@ docker compose run --rm app bin/console doctrine:migrations:migrate
 docker compose run --rm app bin/console cache:clear
 docker compose run --rm app composer test-local
 docker compose run --rm app composer phpstan-local
+docker compose run --rm app composer ecs
+docker compose run --rm app composer ecsfix-local
 ```
 
 Other tools (Docker Compose itself, git, host-side utilities) can be run directly on the host.
