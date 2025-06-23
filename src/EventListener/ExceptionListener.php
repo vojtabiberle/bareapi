@@ -32,7 +32,7 @@ class ExceptionListener
             $statusCode = $exception->getStatusCode();
         }
 
-        if ($this->kernelEnvironment === 'dev') {
+        if ($this->kernelEnvironment === 'dev' || $this->kernelEnvironment === 'test') {
             $message = sprintf(
                 '%s: %s in %s:%d%sStack trace:%s%s',
                 get_class($exception),
