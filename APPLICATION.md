@@ -39,11 +39,11 @@ Filtering utilizes PostgreSQL JSONB operators through Doctrine QueryBuilder, for
 
 Each CRUD operation is managed by a dedicated single-action controller implementing the `__invoke` method:
 
-- [`DataListController`](src/Controller/DataListController.php:1) — Handles `GET /data/{type}` (supports optional `?field=value` filters).
-- [`DataCreateController`](src/Controller/DataCreateController.php:1) — Handles `POST /data/{type}`.
-- [`DataShowController`](src/Controller/DataShowController.php:1) — Handles `GET /data/{type}/{id}`.
-- [`DataUpdateController`](src/Controller/DataUpdateController.php:1) — Handles `PUT /data/{type}/{id}`.
-- [`DataDeleteController`](src/Controller/DataDeleteController.php:1) — Handles `DELETE /data/{type}/{id}`.
+- [`DataListController`](src/Controller/DataListController.php:1) — Handles `GET /api/{type}` (supports optional `?field=value` filters).
+- [`DataCreateController`](src/Controller/DataCreateController.php:1) — Handles `POST /api/{type}`.
+- [`DataShowController`](src/Controller/DataShowController.php:1) — Handles `GET /api/{type}/{id}`.
+- [`DataUpdateController`](src/Controller/DataUpdateController.php:1) — Handles `PUT /api/{type}/{id}`.
+- [`DataDeleteController`](src/Controller/DataDeleteController.php:1) — Handles `DELETE /api/{type}/{id}`.
 
 Controllers reside in `src/Controller/` and utilize the generic repository and JSON Schema validation (via `justinrainbow/json-schema` and Symfony Validator). All controllers are written with strict typing and follow PSR-12.
 
@@ -53,12 +53,12 @@ Routes are defined once in `config/routes/data.yaml` using wildcards:
 
 ```yaml
 data_collection:
-    path: /data/{type}
+    path: /api/{type}
     controller: Bareapi\Controller\DataListController
     methods: [GET]
 
 data_create:
-    path: /data/{type}
+    path: /api/{type}
     controller: Bareapi\Controller\DataCreateController
     methods: [POST]
 
@@ -106,7 +106,7 @@ To introduce a new object type:
 
 1. Add your JSON Schema to `config/schemas/{newtype}.json`.
 2. (Optional) Define a `version` property in your schema.
-3. Use the REST endpoints: `POST`, `GET`, `PUT`, or `DELETE` at `/data/{newtype}` and `/data/{newtype}/{id}`. No code changes are required.
+3. Use the REST endpoints: `POST`, `GET`, `PUT`, or `DELETE` at `/api/{newtype}` and `/api/{newtype}/{id}`. No code changes are required.
 
 ## Dependencies
 
@@ -181,7 +181,7 @@ The following controllers serve as the "agents" of the BareAPI application, each
 **Role:** Handles the creation of new meta objects.
 
 **Responsibilities:**
-- Receives `POST /data/{type}` requests.
+- Receives `POST /api/{type}` requests.
 - Validates incoming data against the relevant JSON Schema.
 - Persists new objects using the repository.
 
@@ -248,7 +248,7 @@ final class DataCreateController
 **Role:** Handles the deletion of meta objects.
 
 **Responsibilities:**
-- Receives `DELETE /data/{type}/{id}` requests.
+- Receives `DELETE /api/{type}/{id}` requests.
 - Locates and deletes the specified object.
 
 **Inputs:**
@@ -300,7 +300,7 @@ final class DataDeleteController
 **Role:** Lists meta objects of a given type.
 
 **Responsibilities:**
-- Receives `GET /data/{type}` requests.
+- Receives `GET /api/{type}` requests.
 - Applies optional query filters.
 - Retrieves and returns a list of objects.
 
@@ -353,7 +353,7 @@ final class DataListController
 **Role:** Retrieves a single meta object by ID.
 
 **Responsibilities:**
-- Receives `GET /data/{type}/{id}` requests.
+- Receives `GET /api/{type}/{id}` requests.
 - Retrieves the specified object.
 
 **Inputs:**
@@ -403,7 +403,7 @@ final class DataShowController
 **Role:** Updates an existing meta object.
 
 **Responsibilities:**
-- Receives `PUT /data/{type}/{id}` requests.
+- Receives `PUT /api/{type}/{id}` requests.
 - Validates updated data against the JSON Schema.
 - Persists changes.
 
