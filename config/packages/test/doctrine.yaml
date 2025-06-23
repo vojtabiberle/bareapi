@@ -1,4 +1,0 @@
-doctrine:
-    dbal:
-        driver: 'pdo_pgsql'
-        url: 'postgresql://bareapi:bareapi@db:5432/bareapi_test?serverVersion=17&charset=utf8'
