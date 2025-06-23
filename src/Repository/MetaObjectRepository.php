@@ -4,6 +4,8 @@ namespace Bareapi\Repository;
 
 use Bareapi\Controller\ControllerUtil;
 use Bareapi\Entity\MetaObject;
+use Bareapi\Exception\InvalidFilterException;
+use Bareapi\Service\SchemaService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 
@@ -16,10 +18,13 @@ class MetaObjectRepository
      */
     private string $entityClass;
 
-    public function __construct(EntityManagerInterface $em)
+    private SchemaService $schemaService;
+
+    public function __construct(EntityManagerInterface $em, SchemaService $schemaService)
     {
         $this->em = $em;
         $this->entityClass = MetaObject::class;
+        $this->schemaService = $schemaService;
     }
 
     public function find(string $id): ?MetaObject
@@ -48,17 +53,46 @@ class MetaObjectRepository
      */
     public function findByTypeAndFilters(string $type, array $filters): array
     {
-        $qb = $this->createTypeQueryBuilder($type);
+        $filterableFields = $this->schemaService->getFilterableFields($type);
+
+        $sql = 'SELECT * FROM meta_objects WHERE type = :type';
+        $params = [
+            'type' => $type,
+        ];
+        $types = [
+            'type' => \PDO::PARAM_STR,
+        ];
+
         foreach ($filters as $key => $value) {
-            $qb->andWhere('m.data->> :field = :val')
-                ->setParameter('field', $key)
-                ->setParameter('val', ControllerUtil::toStringSafe($value));
+            if (! in_array($key, $filterableFields, true)) {
+                throw new InvalidFilterException($key, $type);
+            }
+            $paramName = 'filter_' . $key;
+            $sql .= " AND data->>'{$key}' = :{$paramName}";
+            $params[$paramName] = ControllerUtil::toStringSafe($value);
         }
-        $result = $qb->getQuery()->getResult();
-        return array_values(array_filter(
-            is_array($result) ? $result : [],
-            fn ($item) => $item instanceof \Bareapi\Entity\MetaObject
-        ));
+
+        // Remove duplicate AND if present
+        $sql = preg_replace('/( AND )+/', ' AND ', $sql);
+        if (! is_string($sql)) {
+            throw new \RuntimeException('SQL must be a string');
+        }
+
+        $conn = $this->em->getConnection();
+        $stmt = $conn->prepare($sql);
+
+        // Bind parameters
+        foreach ($params as $name => $val) {
+            $stmt->bindValue($name, $val);
+        }
+
+        $result = $stmt->executeQuery()->fetchAllAssociative();
+
+        // Hydrate MetaObject entities, skip nulls
+        return array_values(array_filter(array_map(function ($row) {
+            $entity = $this->em->getRepository(MetaObject::class)->find($row['id']);
+            return $entity instanceof MetaObject ? $entity : null;
+        }, $result)));
     }
 
     public function save(MetaObject $obj): void

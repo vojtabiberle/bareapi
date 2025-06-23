@@ -8,6 +8,14 @@ services:
         bind:
             $projectDir: '%kernel.project_dir%'
 
+    Bareapi\Service\SchemaService:
+        arguments:
+            $schemaDir: '%kernel.project_dir%/config/schemas/'
+
+    Bareapi\Repository\MetaObjectRepository:
+        arguments:
+            $schemaService: '@Bareapi\Service\SchemaService'
+
     Bareapi\:
         resource: '../src/*'
         exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'

@@ -2,23 +2,16 @@
 
 namespace Bareapi\Tests\Feature;
 
-use Bareapi\Tests\RefreshDatabaseForWebTestTrait;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-
-class DataUpdateControllerTest extends WebTestCase
+class DataUpdateControllerTest extends FeatureTestCase
 {
-    use RefreshDatabaseForWebTestTrait;
-
     public function testUpdateNoteSuccess(): void
     {
-        $client = static::createClient();
-
         // Create a note
         $payload = [
             'title' => 'Original Title',
             'content' => 'Original Content',
         ];
-        $client->request(
+        $this->client->request(
             'POST',
             '/api/notes',
             [],
@@ -29,7 +22,7 @@ class DataUpdateControllerTest extends WebTestCase
             is_string(json_encode($payload)) ? json_encode($payload) : null
         );
         $this->assertResponseStatusCodeSame(201);
-        $content = $client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         $created = json_decode(is_string($content) ? $content : '', true);
         $this->assertIsArray($created, 'Created response is not a valid array');
         $this->assertArrayHasKey('id', $created, 'POST /api/notes did not return an id');
@@ -42,7 +35,7 @@ class DataUpdateControllerTest extends WebTestCase
             'title' => 'Updated Title',
             'content' => 'Updated Content',
         ];
-        $client->request(
+        $this->client->request(
             'PUT',
             '/api/notes/' . (string) $created['id'],
             [],
@@ -53,7 +46,7 @@ class DataUpdateControllerTest extends WebTestCase
             is_string(json_encode($updatePayload)) ? json_encode($updatePayload) : null
         );
         $this->assertResponseIsSuccessful();
-        $content = $client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         $updated = json_decode(is_string($content) ? $content : '', true);
         $this->assertIsArray($updated, 'Updated response is not a valid array');
         $this->assertArrayHasKey('data', $updated, 'PUT /api/notes/{id} did not return a data object');
@@ -64,12 +57,11 @@ class DataUpdateControllerTest extends WebTestCase
 
     public function testUpdateNoteNotFound(): void
     {
-        $client = static::createClient();
         $updatePayload = [
             'title' => 'Should Not Exist',
             'content' => 'Should Not Exist',
         ];
-        $client->request(
+        $this->client->request(
             'PUT',
             '/api/notes/00000000-0000-0000-0000-000000000000',
             [],
@@ -84,14 +76,12 @@ class DataUpdateControllerTest extends WebTestCase
 
     public function testUpdateNoteValidationError(): void
     {
-        $client = static::createClient();
-
         // Create a note
         $payload = [
             'title' => 'To be updated',
             'content' => 'To be updated',
         ];
-        $client->request(
+        $this->client->request(
             'POST',
             '/api/notes',
             [],
@@ -102,7 +92,7 @@ class DataUpdateControllerTest extends WebTestCase
             is_string(json_encode($payload)) ? json_encode($payload) : null
         );
         $this->assertResponseStatusCodeSame(201);
-        $content = $client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         $created = json_decode(is_string($content) ? $content : '', true);
         $this->assertIsArray($created, 'Created response is not a valid array');
         $this->assertArrayHasKey('id', $created);
@@ -111,7 +101,7 @@ class DataUpdateControllerTest extends WebTestCase
         $this->assertIsArray($created['data'], 'Created data is not a valid array');
 
         // Update with invalid data
-        $client->request(
+        $this->client->request(
             'PUT',
             '/api/notes/' . (string) $created['id'],
             [],
@@ -126,14 +116,14 @@ class DataUpdateControllerTest extends WebTestCase
             ]) : null
         );
         $this->assertResponseStatusCodeSame(200);
-        $content = $client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         $response = json_decode(is_string($content) ? $content : '', true);
         $this->assertIsArray($response, 'Response is not a valid array');
         $this->assertArrayHasKey('id', $response);
         $this->assertArrayHasKey('data', $response);
         $this->assertIsArray($response['data'], 'Response data is not a valid array');
         $this->assertSame('', $response['data']['title']);
-        $content = $client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         $response = json_decode(is_string($content) ? $content : '', true);
         $this->assertIsArray($response, 'Response is not a valid array');
         $this->assertArrayHasKey('data', $response);
@@ -143,7 +133,7 @@ class DataUpdateControllerTest extends WebTestCase
 
     public function testValidationErrorWhenTypeIsInvalid(): void
     {
-        $client = static::createClient();
+        $client = $this->client;
 
         // Create a note first
         $payload = [

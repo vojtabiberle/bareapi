@@ -2,22 +2,16 @@
 
 namespace Bareapi\Tests\Feature;
 
-use Bareapi\Tests\RefreshDatabaseForWebTestTrait;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-
-class DataCreateControllerTest extends WebTestCase
+class DataCreateControllerTest extends FeatureTestCase
 {
-    use RefreshDatabaseForWebTestTrait;
-
     public function testAuthenticatedUserCanCreateNote(): void
     {
-        $client = static::createClient();
         $payload = [
             'title' => 'Meeting Notes',
             'content' => 'Discuss project milestones and deadlines.',
         ];
 
-        $client->request(
+        $this->client->request(
             'POST',
             '/api/notes',
             [],
@@ -29,7 +23,7 @@ class DataCreateControllerTest extends WebTestCase
         );
 
         $this->assertResponseStatusCodeSame(201);
-        $content = $client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         $response = json_decode(is_string($content) ? $content : '', true);
         $this->assertIsArray($response, 'Response is not a valid array');
         $this->assertArrayHasKey('id', $response);
@@ -41,12 +35,11 @@ class DataCreateControllerTest extends WebTestCase
 
     public function testValidationErrorWhenTitleIsMissing(): void
     {
-        $client = static::createClient();
         $payload = [
             'content' => 'No title provided',
         ];
 
-        $client->request(
+        $this->client->request(
             'POST',
             '/api/notes',
             [],
@@ -58,7 +51,7 @@ class DataCreateControllerTest extends WebTestCase
         );
 
         $this->assertResponseStatusCodeSame(422);
-        $content = $client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         $response = json_decode(is_string($content) ? $content : '', true);
         $this->assertIsArray($response, 'Response is not a valid array');
         $this->assertArrayHasKey('errors', $response);
@@ -67,9 +60,7 @@ class DataCreateControllerTest extends WebTestCase
 
     public function testValidationErrorWhenPayloadIsMalformed(): void
     {
-        $client = static::createClient();
-
-        $client->request(
+        $this->client->request(
             'POST',
             '/api/notes',
             [],
@@ -85,14 +76,13 @@ class DataCreateControllerTest extends WebTestCase
 
     public function testValidationErrorWhenTypeIsInvalid(): void
     {
-        $client = static::createClient();
         $payload = [
             'title' => 'Invalid Type',
             'content' => 'This should fail.',
             'type' => 'invalid-type',
         ];
 
-        $client->request(
+        $this->client->request(
             'POST',
             '/api/notes',
             [],
@@ -104,7 +94,7 @@ class DataCreateControllerTest extends WebTestCase
         );
 
         $this->assertResponseStatusCodeSame(400);
-        $content = $client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         $response = json_decode(is_string($content) ? $content : '', true);
         $this->assertIsArray($response, 'Response is not a valid array');
         $this->assertSame([

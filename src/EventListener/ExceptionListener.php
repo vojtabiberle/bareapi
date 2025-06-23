@@ -2,6 +2,7 @@
 
 namespace Bareapi\EventListener;
 
+use Bareapi\Exception\InvalidFilterException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
@@ -26,6 +27,17 @@ class ExceptionListener
         }
 
         $exception = $event->getThrowable();
+
+        if ($exception instanceof InvalidFilterException) {
+            $payload = [
+                'status' => 'error',
+                'code' => 400,
+                'message' => $exception->getMessage(),
+            ];
+            $event->setResponse(new JsonResponse($payload, 400));
+            return;
+        }
+
         $statusCode = 500;
 
         if ($exception instanceof HttpExceptionInterface) {

@@ -1,28 +1,40 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bareapi\Tests;
+
+use Doctrine\ORM\EntityManagerInterface;
 
 trait RefreshDatabaseForWebTestTrait
 {
-    /**
-     * @param array<string, mixed> $options
-     * @param array<string, mixed> $server
-     */
-    public static function createClient(array $options = [], array $server = []): \Symfony\Bundle\FrameworkBundle\KernelBrowser
+    protected function setUp(): void
     {
-        $client = parent::createClient($options, $server);
+        parent::setUp();
+        $this->refreshDatabase();
+    }
 
-        $kernel = $client->getKernel();
-        $application = new \Symfony\Bundle\FrameworkBundle\Console\Application($kernel);
-        $application->setAutoExit(false);
-        $input = new \Symfony\Component\Console\Input\ArrayInput([
-            'command' => 'doctrine:migrations:migrate',
-            '--env' => 'test',
-            '--no-interaction' => true,
-        ]);
-        $output = new \Symfony\Component\Console\Output\NullOutput();
-        $application->run($input, $output);
+    protected function refreshDatabase(): void
+    {
+        /** @var EntityManagerInterface $em */
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $connection = $em->getConnection();
 
-        return $client;
+        $connection->beginTransaction();
+        try {
+            // Disable referential integrity
+            $connection->executeStatement('SET session_replication_role = replica');
+
+            // Truncate meta_objects table
+            $connection->executeStatement('TRUNCATE TABLE "meta_objects" RESTART IDENTITY CASCADE');
+
+            // Re-enable referential integrity
+            $connection->executeStatement('SET session_replication_role = DEFAULT');
+
+            $connection->commit();
+        } catch (\Throwable $e) {
+            $connection->rollBack();
+            throw $e;
+        }
     }
 }

@@ -18,12 +18,25 @@ class DataListController
     public function __invoke(string $type, Request $request): JsonResponse
     {
         $filters = $request->query->all();
-        if ($filters) {
-            $data = $this->repo->findByTypeAndFilters($type, ControllerUtil::toStringKeyedArray($filters));
-        } else {
-            $data = $this->repo->findAllByType($type);
+        try {
+            if ($filters) {
+                $data = $this->repo->findByTypeAndFilters($type, ControllerUtil::toStringKeyedArray($filters));
+            } else {
+                $data = $this->repo->findAllByType($type);
+            }
+            return new JsonResponse($data);
+        } catch (\Bareapi\Exception\InvalidFilterException $e) {
+            return new JsonResponse([
+                'message' => $e->getMessage(),
+            ], 400);
+        } catch (\Bareapi\Exception\SchemaNotFoundException $e) {
+            return new JsonResponse([
+                'message' => $e->getMessage(),
+            ], 404);
+        } catch (\Throwable $e) {
+            return new JsonResponse([
+                'message' => $e->getMessage(),
+            ], 500);
         }
-
-        return new JsonResponse($data);
     }
 }
