@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit bootstrap="tests/bootstrap.php" colors="true" verbose="true" cacheResult="false" cacheResultFile="/dev/null">
+<phpunit bootstrap="tests/bootstrap.php" colors="true" cacheResult="true">
     <source>
         <include>
             <directory suffix=".php">src</directory>
