@@ -7,6 +7,7 @@ namespace Bareapi\Tests\Feature\Api;
 use Bareapi\Entity\MetaObject;
 use Bareapi\Entity\MetaObjectRevision;
 use Bareapi\Entity\Schema;
+use Bareapi\Security\ApiKeyAuthenticator;
 use Bareapi\Tests\Factory\MetaObjectFactory;
 use Bareapi\Tests\Factory\SchemaFactory;
 use Bareapi\Tests\Feature\FeatureTestCase;
@@ -14,15 +15,29 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class RepositoryControllerTest extends FeatureTestCase
 {
-    private const API_KEY = 'test-api-key-for-ci';
     private const CONTENT_TYPE = 'application/vnd.api+json';
 
     private EntityManagerInterface $em;
+    private string $apiKey;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->em = self::getContainer()->get(EntityManagerInterface::class);
+        $this->apiKey = $this->getApiKeyFromContainer();
+    }
+
+    /**
+     * Get the API key from the container's ApiKeyAuthenticator.
+     * This ensures tests use the same key the authenticator expects.
+     */
+    private function getApiKeyFromContainer(): string
+    {
+        $authenticator = self::getContainer()->get(ApiKeyAuthenticator::class);
+        $reflection = new \ReflectionClass($authenticator);
+        $property = $reflection->getProperty('apiKey');
+
+        return $property->getValue($authenticator);
     }
 
     // ==================== LIST Tests ====================
@@ -582,7 +597,7 @@ class RepositoryControllerTest extends FeatureTestCase
     private function authHeaders(): array
     {
         return [
-            'HTTP_X-API-Key' => self::API_KEY,
+            'HTTP_X-API-Key' => $this->apiKey,
             'HTTP_X-Organization-ID' => 'org-123',
         ];
     }

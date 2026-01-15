@@ -1,0 +1,4 @@
+services:
+    # Make ApiKeyAuthenticator public for tests so we can retrieve the configured API key
+    Bareapi\Security\ApiKeyAuthenticator:
+        public: true
