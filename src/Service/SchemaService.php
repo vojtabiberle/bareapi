@@ -4,62 +4,102 @@ declare(strict_types=1);
 
 namespace Bareapi\Service;
 
+use Bareapi\Entity\Schema;
 use Bareapi\Exception\SchemaNotFoundException;
+use Bareapi\Repository\SchemaRepositoryInterface;
 
 final class SchemaService implements SchemaServiceInterface
 {
-    private string $schemaDir;
+    public function __construct(
+        private SchemaRepositoryInterface $schemaRepository,
+    ) {
+    }
 
-    public function __construct(string $schemaDir = __DIR__ . '/../../config/schemas/')
+    public function getDefaultSchema(string $objectType): Schema
     {
-        $this->schemaDir = rtrim($schemaDir, '/') . '/';
+        $schema = $this->schemaRepository->findDefaultSchema($objectType);
+
+        if ($schema === null) {
+            throw new SchemaNotFoundException("No default schema found for type: {$objectType}");
+        }
+
+        return $schema;
+    }
+
+    public function getSchemaByVersion(string $objectType, string $version): Schema
+    {
+        $schema = $this->schemaRepository->findByVersion($objectType, $version);
+
+        if ($schema === null) {
+            throw new SchemaNotFoundException("Schema not found for type: {$objectType}, version: {$version}");
+        }
+
+        return $schema;
     }
 
     /**
-     * @throws SchemaNotFoundException
+     * @return array<string, mixed>
      */
+    public function getSchemaData(string $objectType, ?string $version = null): array
+    {
+        if ($version !== null) {
+            return $this->getSchemaByVersion($objectType, $version)->getSchema();
+        }
+
+        return $this->getDefaultSchema($objectType)->getSchema();
+    }
+
     /**
      * @return array<int, string>
      */
-    public function getFilterableFields(string $type): array
+    public function getFilterableFields(string $objectType): array
     {
-        $schema = $this->loadSchema($type);
+        $schema = $this->getSchemaData($objectType);
 
         if (! isset($schema['properties']) || ! is_array($schema['properties'])) {
             return [];
         }
 
-        return (array) array_keys(array_filter(
-            $schema['properties'],
-            fn ($definition) =>
-            is_array($definition)
+        /** @var array<string, mixed> $properties */
+        $properties = $schema['properties'];
+
+        $filterable = array_filter(
+            $properties,
+            fn ($definition) => is_array($definition)
                 && array_key_exists('x-filterable', $definition)
                 && $definition['x-filterable'] === true
-        ));
+        );
+
+        /** @var array<int, string> $keys */
+        $keys = array_keys($filterable);
+
+        return $keys;
     }
 
     /**
-     * @return array<string, mixed>
-     * @throws SchemaNotFoundException
+     * @return Schema[]
      */
-    /**
-     * @return array<string, mixed>
-     */
-    private function loadSchema(string $type): array
+    public function listSchemas(string $objectType): array
     {
-        $file = $this->schemaDir . $type . '.json';
-        if (! is_file($file)) {
-            throw new SchemaNotFoundException("Schema file not found for type: {$type}");
+        return $this->schemaRepository->findByObjectType($objectType);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function listObjectTypes(): array
+    {
+        return $this->schemaRepository->findAllObjectTypes();
+    }
+
+    public function schemaExists(string $objectType): bool
+    {
+        try {
+            $this->getDefaultSchema($objectType);
+
+            return true;
+        } catch (SchemaNotFoundException) {
+            return false;
         }
-        $content = file_get_contents($file);
-        if ($content === false) {
-            throw new SchemaNotFoundException("Failed to read schema file for type: {$type}");
-        }
-        $schema = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
-        if (! is_array($schema)) {
-            throw new SchemaNotFoundException("Invalid schema format for type: {$type}");
-        }
-        /** @var array<string, mixed> $schema */
-        return $schema;
     }
 }

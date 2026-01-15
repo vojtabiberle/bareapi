@@ -4,33 +4,84 @@ declare(strict_types=1);
 
 namespace Bareapi\Tests\Unit\Service;
 
+use Bareapi\Entity\Schema;
 use Bareapi\Exception\SchemaNotFoundException;
+use Bareapi\Repository\SchemaRepositoryInterface;
 use Bareapi\Service\SchemaService;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 final class SchemaServiceTest extends TestCase
 {
-    private string $tmpDir;
+    /**
+     * @var SchemaRepositoryInterface&MockObject
+     */
+    private SchemaRepositoryInterface $repository;
+
+    private SchemaService $service;
 
     protected function setUp(): void
     {
-        $this->tmpDir = sys_get_temp_dir() . '/bareapi_schema_test_' . uniqid();
-        mkdir($this->tmpDir, 0777, true);
+        $this->repository = $this->createMock(SchemaRepositoryInterface::class);
+        $this->service = new SchemaService($this->repository);
     }
 
-    protected function tearDown(): void
+    public function testGetDefaultSchemaReturnsSchema(): void
     {
-        foreach ((array) glob($this->tmpDir . '/*.json') as $file) {
-            if (is_string($file)) {
-                unlink($file);
-            }
-        }
-        rmdir($this->tmpDir);
+        $schema = new Schema('notes', '1.0.0', [
+            'type' => 'object',
+        ]);
+        $schema->setIsDefault(true);
+
+        $this->repository->expects($this->once())
+            ->method('findDefaultSchema')
+            ->with('notes')
+            ->willReturn($schema);
+
+        $result = $this->service->getDefaultSchema('notes');
+        $this->assertSame($schema, $result);
+    }
+
+    public function testGetDefaultSchemaThrowsIfNotFound(): void
+    {
+        $this->repository->expects($this->once())
+            ->method('findDefaultSchema')
+            ->with('notes')
+            ->willReturn(null);
+
+        $this->expectException(SchemaNotFoundException::class);
+        $this->service->getDefaultSchema('notes');
+    }
+
+    public function testGetSchemaByVersionReturnsSchema(): void
+    {
+        $schema = new Schema('notes', '1.0.0', [
+            'type' => 'object',
+        ]);
+
+        $this->repository->expects($this->once())
+            ->method('findByVersion')
+            ->with('notes', '1.0.0')
+            ->willReturn($schema);
+
+        $result = $this->service->getSchemaByVersion('notes', '1.0.0');
+        $this->assertSame($schema, $result);
+    }
+
+    public function testGetSchemaByVersionThrowsIfNotFound(): void
+    {
+        $this->repository->expects($this->once())
+            ->method('findByVersion')
+            ->with('notes', '2.0.0')
+            ->willReturn(null);
+
+        $this->expectException(SchemaNotFoundException::class);
+        $this->service->getSchemaByVersion('notes', '2.0.0');
     }
 
     public function testReturnsFilterableFields(): void
     {
-        $schema = [
+        $schemaData = [
             'properties' => [
                 'foo' => [
                     'type' => 'string',
@@ -45,18 +96,21 @@ final class SchemaServiceTest extends TestCase
                 ],
             ],
         ];
-        $json = json_encode($schema);
-        $this->assertIsString($json, 'json_encode failed');
-        file_put_contents($this->tmpDir . '/notes.json', $json);
+        $schema = new Schema('notes', '1.0.0', $schemaData);
+        $schema->setIsDefault(true);
 
-        $service = new SchemaService($this->tmpDir);
-        $fields = $service->getFilterableFields('notes');
+        $this->repository->expects($this->once())
+            ->method('findDefaultSchema')
+            ->with('notes')
+            ->willReturn($schema);
+
+        $fields = $this->service->getFilterableFields('notes');
         $this->assertSame(['foo', 'baz'], $fields);
     }
 
     public function testReturnsEmptyArrayIfNoFilterableFields(): void
     {
-        $schema = [
+        $schemaData = [
             'properties' => [
                 'foo' => [
                     'type' => 'string',
@@ -66,27 +120,72 @@ final class SchemaServiceTest extends TestCase
                 ],
             ],
         ];
-        $json = json_encode($schema);
-        $this->assertIsString($json, 'json_encode failed');
-        file_put_contents($this->tmpDir . '/notes.json', $json);
+        $schema = new Schema('notes', '1.0.0', $schemaData);
+        $schema->setIsDefault(true);
 
-        $service = new SchemaService($this->tmpDir);
-        $fields = $service->getFilterableFields('notes');
+        $this->repository->expects($this->once())
+            ->method('findDefaultSchema')
+            ->with('notes')
+            ->willReturn($schema);
+
+        $fields = $this->service->getFilterableFields('notes');
         $this->assertSame([], $fields);
     }
 
-    public function testThrowsIfSchemaFileMissing(): void
+    public function testListSchemasReturnsSchemas(): void
     {
-        $service = new SchemaService($this->tmpDir);
-        $this->expectException(SchemaNotFoundException::class);
-        $service->getFilterableFields('missing');
+        $schemas = [
+            new Schema('notes', '1.0.0', [
+                'type' => 'object',
+            ]),
+            new Schema('notes', '2.0.0', [
+                'type' => 'object',
+            ]),
+        ];
+
+        $this->repository->expects($this->once())
+            ->method('findByObjectType')
+            ->with('notes')
+            ->willReturn($schemas);
+
+        $result = $this->service->listSchemas('notes');
+        $this->assertCount(2, $result);
     }
 
-    public function testThrowsIfSchemaFileInvalidJson(): void
+    public function testListObjectTypesReturnsTypes(): void
     {
-        file_put_contents($this->tmpDir . '/notes.json', '{invalid json}');
-        $service = new SchemaService($this->tmpDir);
-        $this->expectException(\JsonException::class);
-        $service->getFilterableFields('notes');
+        $types = ['notes', 'tasks', 'users'];
+
+        $this->repository->expects($this->once())
+            ->method('findAllObjectTypes')
+            ->willReturn($types);
+
+        $result = $this->service->listObjectTypes();
+        $this->assertSame($types, $result);
+    }
+
+    public function testSchemaExistsReturnsTrueIfFound(): void
+    {
+        $schema = new Schema('notes', '1.0.0', [
+            'type' => 'object',
+        ]);
+        $schema->setIsDefault(true);
+
+        $this->repository->expects($this->once())
+            ->method('findDefaultSchema')
+            ->with('notes')
+            ->willReturn($schema);
+
+        $this->assertTrue($this->service->schemaExists('notes'));
+    }
+
+    public function testSchemaExistsReturnsFalseIfNotFound(): void
+    {
+        $this->repository->expects($this->once())
+            ->method('findDefaultSchema')
+            ->with('missing')
+            ->willReturn(null);
+
+        $this->assertFalse($this->service->schemaExists('missing'));
     }
 }

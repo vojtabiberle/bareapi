@@ -10,14 +10,6 @@ services:
             $projectDir: '%kernel.project_dir%'
             $apiKey: '%env(API_KEY)%'
 
-    Bareapi\Service\SchemaService:
-        arguments:
-            $schemaDir: '%kernel.project_dir%/config/schemas/'
-
-    Bareapi\Repository\MetaObjectRepository:
-        arguments:
-            $schemaService: '@Bareapi\Service\SchemaService'
-
     Bareapi\:
         resource: '../src/*'
         exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
@@ -26,11 +18,16 @@ services:
         resource: '../src/Controller'
         tags: ['controller.service_arguments']
 
+    # Repository interfaces
+    Bareapi\Repository\SchemaRepositoryInterface:
+        class: Bareapi\Repository\SchemaRepository
 
-    JsonSchema\Validator: ~
+    # Service interfaces
+    Bareapi\Service\SchemaServiceInterface:
+        class: Bareapi\Service\SchemaService
 
     Bareapi\EventListener\ExceptionListener:
-            arguments:
-                $kernelEnvironment: '%kernel.environment%'
-            tags:
-                - { name: kernel.event_listener, event: kernel.exception }
+        arguments:
+            $kernelEnvironment: '%kernel.environment%'
+        tags:
+            - { name: kernel.event_listener, event: kernel.exception }
