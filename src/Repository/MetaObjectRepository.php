@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Bareapi\Repository;
 
-use Bareapi\Controller\ControllerUtil;
 use Bareapi\Entity\MetaObject;
 use Bareapi\Exception\InvalidFilterException;
 use Bareapi\Service\SchemaServiceInterface;
@@ -71,7 +70,7 @@ class MetaObjectRepository
             }
             $paramName = 'filter_' . $key;
             $sql .= " AND data->>'{$key}' = :{$paramName}";
-            $params[$paramName] = ControllerUtil::toStringSafe($value);
+            $params[$paramName] = is_scalar($value) ? (string) $value : '';
         }
 
         // Remove duplicate AND if present

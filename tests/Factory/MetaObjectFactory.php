@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Bareapi\Tests\Factory;
 
 use Bareapi\Entity\MetaObject;
+use Bareapi\Entity\MetaObjectRevision;
 
 final class MetaObjectFactory
 {
@@ -18,9 +19,20 @@ final class MetaObjectFactory
             'title' => 'Test',
             'content' => 'Sample',
         ],
-        string $type = 'notes',
-        string $schemaVersion = '1.0'
+        string $objectType = 'notes',
+        string $schemaVersion = '1.0',
+        string $name = 'test-object',
+        string $organizationId = 'org-123',
+        ?int $projectId = 123,
+        string $branch = 'main',
     ): MetaObject {
-        return new MetaObject($type, $schemaVersion, $data);
+        $metaObject = new MetaObject($objectType, $schemaVersion, $name, $organizationId);
+        $metaObject->setProjectId($projectId);
+        $metaObject->setBranch($branch);
+
+        $revision = new MetaObjectRevision($metaObject, 1, $data);
+        $metaObject->addRevision($revision);
+
+        return $metaObject;
     }
 }
