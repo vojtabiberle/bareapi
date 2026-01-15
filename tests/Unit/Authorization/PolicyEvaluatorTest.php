@@ -109,7 +109,8 @@ final class PolicyEvaluatorTest extends TestCase
             Action::Update,
             ['project-admin'],
             $policy,
-            new ScopeHint(isProjectScoped: false, isOrgScoped: true)
+            new ScopeHint(isProjectScoped: false, isOrgScoped: true),
+            new ObjectContext('test', '', 'org-1') // Empty projectId to test scope mismatch
         );
 
         $this->expectException(ForbiddenException::class);
