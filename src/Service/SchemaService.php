@@ -7,11 +7,14 @@ namespace Bareapi\Service;
 use Bareapi\Entity\Schema;
 use Bareapi\Exception\SchemaNotFoundException;
 use Bareapi\Repository\SchemaRepositoryInterface;
+use Bareapi\Schema\RefersToDefinition;
+use Bareapi\Schema\RefersToParser;
 
 final class SchemaService implements SchemaServiceInterface
 {
     public function __construct(
         private SchemaRepositoryInterface $schemaRepository,
+        private RefersToParser $refersToParser,
     ) {
     }
 
@@ -101,5 +104,15 @@ final class SchemaService implements SchemaServiceInterface
         } catch (SchemaNotFoundException) {
             return false;
         }
+    }
+
+    /**
+     * @return RefersToDefinition[]
+     */
+    public function getRefersToDefinitions(string $objectType): array
+    {
+        $schemaData = $this->getSchemaData($objectType);
+
+        return $this->refersToParser->parse($schemaData);
     }
 }

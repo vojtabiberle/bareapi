@@ -81,5 +81,10 @@ parameters:
             message: '#Method class@anonymous.+toArray\(\) return type has no value type specified in iterable type array#'
             path: tests/*
 
+        # Allow assertTrue(true) pattern for "no exception thrown" tests
+        -
+            message: '#Call to method PHPUnit\\Framework\\Assert::assertTrue\(\) with true will always evaluate to true#'
+            path: tests/*
+
     # Treat warnings as errors
     treatPhpDocTypesAsCertain: false

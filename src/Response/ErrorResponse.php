@@ -115,6 +115,55 @@ class ErrorResponse
         return self::create(500, $message, null, self::generateExceptionId());
     }
 
+    /**
+     * Create reference validation error response.
+     *
+     * @param array{path: string, type: string, uuid: string} $ref
+     */
+    public static function referenceError(array $ref): JsonResponse
+    {
+        return new JsonResponse([
+            'error' => 422,
+            'code' => '422',
+            'message' => 'Reference validation failed',
+            'status' => 'error',
+            'errors' => [[
+                'message' => 'Referenced object not found',
+                'path' => $ref['path'],
+            ]],
+            'meta' => [
+                'ref' => $ref,
+            ],
+        ], 422, [
+            'Content-Type' => self::CONTENT_TYPE,
+        ]);
+    }
+
+    /**
+     * Create delete restricted error response.
+     *
+     * @param array<int, array{fromType: string, path: string, count: int, sample: string[]}> $violations
+     */
+    public static function deleteRestricted(array $violations): JsonResponse
+    {
+        return new JsonResponse([
+            'error' => 409,
+            'code' => '409',
+            'message' => 'Cannot delete: object is referenced by other objects',
+            'status' => 'error',
+            'meta' => [
+                'inboundRefs' => array_map(fn (array $v) => [
+                    'type' => $v['fromType'],
+                    'path' => $v['path'],
+                    'count' => $v['count'],
+                    'sample' => $v['sample'],
+                ], $violations),
+            ],
+        ], 409, [
+            'Content-Type' => self::CONTENT_TYPE,
+        ]);
+    }
+
     private static function generateExceptionId(): string
     {
         return 'metastore-' . bin2hex(random_bytes(8));

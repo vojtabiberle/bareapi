@@ -11,17 +11,23 @@ use Bareapi\DTO\UpdatePatchRequest;
 use Bareapi\DTO\UpdatePutRequest;
 use Bareapi\Entity\MetaObject;
 use Bareapi\Entity\MetaObjectRevision;
+use Bareapi\Exception\DeleteRestrictedException;
 use Bareapi\Exception\ForbiddenException;
 use Bareapi\Exception\MetaObjectNotFoundException;
+use Bareapi\Exception\ReferenceValidationException;
 use Bareapi\Exception\SchemaNotFoundException;
 use Bareapi\Exception\ValidationException;
 use Bareapi\Repository\MetaObjectRepositoryInterface;
 use Bareapi\Response\ErrorResponse;
 use Bareapi\Response\JsonApiSerializer;
 use Bareapi\Security\ApiKeyUser;
+use Bareapi\Service\DeletePlannerService;
+use Bareapi\Service\ReferenceIndexService;
+use Bareapi\Service\RelationshipEnrichmentService;
 use Bareapi\Service\SchemaServiceInterface;
 use Bareapi\Service\TransactionManager;
 use Bareapi\Validation\JsonSchemaValidator;
+use Bareapi\Validation\ReferenceValidator;
 use DateTimeImmutable;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -35,6 +41,10 @@ class RepositoryController
         private MetaObjectRepositoryInterface $repository,
         private SchemaServiceInterface $schemaService,
         private JsonSchemaValidator $validator,
+        private ReferenceValidator $referenceValidator,
+        private ReferenceIndexService $referenceIndexService,
+        private DeletePlannerService $deletePlannerService,
+        private RelationshipEnrichmentService $relationshipEnrichmentService,
         private TransactionManager $transactionManager,
         private AuthorizationService $authService,
         private JsonApiSerializer $serializer,
@@ -109,6 +119,14 @@ class RepositoryController
 
             // Check for existing object with same name in scope
             $projectId = $this->getProjectIdFromScope($request, $createRequest->scope);
+
+            // Validate references
+            $this->referenceValidator->validate(
+                $createRequest->data,
+                $objectType,
+                $projectId,
+                $this->getOrganizationId($request)
+            );
             $branch = $createRequest->branch ?? 'main';
 
             $existing = $this->repository->findByNameAndScope(
@@ -153,6 +171,9 @@ class RepositoryController
                 return $metaObject;
             });
 
+            // Sync reference index
+            $this->referenceIndexService->syncRefsForObject($metaObject, $createRequest->data);
+
             $response = MetaObjectResponse::fromEntity($metaObject);
 
             return $this->serializer->created($response);
@@ -160,13 +181,15 @@ class RepositoryController
             return ErrorResponse::notFound($e->getMessage());
         } catch (ValidationException $e) {
             return ErrorResponse::validationErrorFromRaw($e->getErrors());
+        } catch (ReferenceValidationException $e) {
+            return ErrorResponse::referenceError($e->getRef());
         } catch (ForbiddenException $e) {
             return ErrorResponse::forbidden($e->getMessage());
         }
     }
 
     #[Route('/{objectType}/{uuid}', name: 'repository_get', methods: ['GET'])]
-    public function get(string $objectType, string $uuid): JsonResponse
+    public function get(string $objectType, string $uuid, Request $request): JsonResponse
     {
         try {
             $metaObject = $this->findOrFail($uuid, $objectType);
@@ -177,6 +200,26 @@ class RepositoryController
             }
 
             $response = MetaObjectResponse::fromEntity($metaObject, $latestRevision);
+
+            // Check for relationship enrichment
+            $includeRelationships = $request->query->getBoolean('include')
+                || $request->query->has('relationships');
+
+            if ($includeRelationships) {
+                $requestedPaths = $this->parseRelationshipsParam($request);
+                $baseUrl = $this->getBaseApiUrl($request);
+
+                $relationships = $this->relationshipEnrichmentService->enrichRelationships(
+                    $latestRevision->getData(),
+                    $objectType,
+                    $requestedPaths,
+                    $metaObject->getProjectId(),
+                    $metaObject->getOrganizationId(),
+                    $baseUrl
+                );
+
+                return $this->serializer->successWithRelationships($response, $relationships);
+            }
 
             return $this->serializer->success($response);
         } catch (MetaObjectNotFoundException $e) {
@@ -217,6 +260,14 @@ class RepositoryController
             // Validate merged data against schema
             $this->validator->validate($mergedData, $schema->getSchema());
 
+            // Validate references
+            $this->referenceValidator->validate(
+                $mergedData,
+                $objectType,
+                $metaObject->getProjectId(),
+                $metaObject->getOrganizationId()
+            );
+
             $metaObject = $this->transactionManager->transactional(function () use ($metaObject, $mergedData) {
                 $newRevision = new MetaObjectRevision(
                     $metaObject,
@@ -231,6 +282,9 @@ class RepositoryController
                 return $metaObject;
             });
 
+            // Sync reference index
+            $this->referenceIndexService->syncRefsForObject($metaObject, $mergedData);
+
             $response = MetaObjectResponse::fromEntity($metaObject);
 
             return $this->serializer->success($response);
@@ -240,6 +294,8 @@ class RepositoryController
             return ErrorResponse::notFound($e->getMessage());
         } catch (ValidationException $e) {
             return ErrorResponse::validationErrorFromRaw($e->getErrors());
+        } catch (ReferenceValidationException $e) {
+            return ErrorResponse::referenceError($e->getRef());
         } catch (ForbiddenException $e) {
             return ErrorResponse::forbidden($e->getMessage());
         }
@@ -271,6 +327,14 @@ class RepositoryController
             // Validate data against schema
             $this->validator->validate($putRequest->data, $schema->getSchema());
 
+            // Validate references
+            $this->referenceValidator->validate(
+                $putRequest->data,
+                $objectType,
+                $metaObject->getProjectId(),
+                $metaObject->getOrganizationId()
+            );
+
             $metaObject = $this->transactionManager->transactional(function () use (
                 $metaObject,
                 $putRequest,
@@ -294,6 +358,9 @@ class RepositoryController
                 return $metaObject;
             });
 
+            // Sync reference index
+            $this->referenceIndexService->syncRefsForObject($metaObject, $putRequest->data);
+
             $response = MetaObjectResponse::fromEntity($metaObject);
 
             return $this->serializer->success($response);
@@ -303,6 +370,8 @@ class RepositoryController
             return ErrorResponse::notFound($e->getMessage());
         } catch (ValidationException $e) {
             return ErrorResponse::validationErrorFromRaw($e->getErrors());
+        } catch (ReferenceValidationException $e) {
+            return ErrorResponse::referenceError($e->getRef());
         } catch (ForbiddenException $e) {
             return ErrorResponse::forbidden($e->getMessage());
         }
@@ -327,13 +396,16 @@ class RepositoryController
                 $metaObject->getOrganizationId()
             );
 
-            $this->repository->softDelete($metaObject);
+            // Execute delete with referential integrity checks
+            $this->deletePlannerService->executeDelete($metaObject);
 
             return new JsonResponse(null, 204);
         } catch (MetaObjectNotFoundException $e) {
             return ErrorResponse::notFound($e->getMessage());
         } catch (SchemaNotFoundException $e) {
             return ErrorResponse::notFound($e->getMessage());
+        } catch (DeleteRestrictedException $e) {
+            return ErrorResponse::deleteRestricted($e->getViolations());
         } catch (ForbiddenException $e) {
             return ErrorResponse::forbidden($e->getMessage());
         }
@@ -524,5 +596,32 @@ class RepositoryController
         }
 
         return $filters;
+    }
+
+    /**
+     * Parse ?relationships=field1,field2 query param.
+     *
+     * @return string[]
+     */
+    private function parseRelationshipsParam(Request $request): array
+    {
+        $param = $request->query->getString('relationships', '');
+        if ($param === '') {
+            return []; // Empty means "all relationships"
+        }
+
+        return array_map('trim', explode(',', $param));
+    }
+
+    /**
+     * Get base API URL for relationship links.
+     */
+    private function getBaseApiUrl(Request $request): string
+    {
+        return sprintf(
+            '%s://%s/api/v1/repository',
+            $request->getScheme(),
+            $request->getHttpHost()
+        );
     }
 }

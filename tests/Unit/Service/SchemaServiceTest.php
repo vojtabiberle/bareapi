@@ -7,6 +7,7 @@ namespace Bareapi\Tests\Unit\Service;
 use Bareapi\Entity\Schema;
 use Bareapi\Exception\SchemaNotFoundException;
 use Bareapi\Repository\SchemaRepositoryInterface;
+use Bareapi\Schema\RefersToParser;
 use Bareapi\Service\SchemaService;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -23,7 +24,8 @@ final class SchemaServiceTest extends TestCase
     protected function setUp(): void
     {
         $this->repository = $this->createMock(SchemaRepositoryInterface::class);
-        $this->service = new SchemaService($this->repository);
+        $refersToParser = new RefersToParser();
+        $this->service = new SchemaService($this->repository, $refersToParser);
     }
 
     public function testGetDefaultSchemaReturnsSchema(): void

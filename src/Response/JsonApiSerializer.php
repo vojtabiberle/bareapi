@@ -39,6 +39,31 @@ class JsonApiSerializer
     }
 
     /**
+     * Success response with enriched relationships.
+     *
+     * @param array<string, array<string, mixed>> $enrichedRelationships
+     */
+    public function successWithRelationships(
+        MetaObjectResponse $data,
+        array $enrichedRelationships,
+        int $statusCode = 200,
+    ): JsonResponse {
+        $baseUrl = $this->getBaseUrl();
+        $serialized = $this->serializeOne($data, $baseUrl);
+
+        // Merge enriched relationships
+        if (! empty($enrichedRelationships)) {
+            $serialized['enrichedRelationships'] = $enrichedRelationships;
+        }
+
+        return new JsonResponse([
+            'data' => $serialized,
+        ], $statusCode, [
+            'Content-Type' => self::CONTENT_TYPE,
+        ]);
+    }
+
+    /**
      * @param MetaObjectResponse|MetaObjectResponse[] $data
      * @return array{data: array<string, mixed>|array<int, array<string, mixed>>}
      */

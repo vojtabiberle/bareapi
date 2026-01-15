@@ -357,4 +357,66 @@ class MetaObjectRepository implements MetaObjectRepositoryInterface
 
         return isset($result['cnt']) && is_numeric($result['cnt']) ? (int) $result['cnt'] : 0;
     }
+
+    /**
+     * @param string[] $uuids
+     * @return array<string, bool>
+     */
+    public function checkUuidsExist(
+        array $uuids,
+        string $objectType,
+        ?int $projectId,
+        string $organizationId,
+    ): array {
+        if (empty($uuids)) {
+            return [];
+        }
+
+        $conn = $this->em->getConnection();
+
+        // Build parameterized query
+        $placeholders = [];
+        $params = [
+            'objectType' => $objectType,
+            'organizationId' => $organizationId,
+        ];
+
+        foreach (array_values($uuids) as $i => $uuid) {
+            $placeholders[] = ':uuid_' . $i;
+            $params['uuid_' . $i] = $uuid;
+        }
+
+        $sql = 'SELECT uuid FROM meta_objects ';
+        $sql .= 'WHERE object_type = :objectType ';
+        $sql .= 'AND organization_id = :organizationId ';
+        $sql .= 'AND deleted_at IS NULL ';
+
+        if ($projectId !== null) {
+            $sql .= 'AND project_id = :projectId ';
+            $params['projectId'] = $projectId;
+        } else {
+            $sql .= 'AND project_id IS NULL ';
+        }
+
+        $sql .= 'AND uuid IN (' . implode(', ', $placeholders) . ')';
+
+        $stmt = $conn->prepare($sql);
+        $rows = $stmt->executeQuery($params)->fetchAllAssociative();
+
+        // Build result map
+        $existing = [];
+        foreach ($rows as $row) {
+            if (isset($row['uuid']) && is_string($row['uuid'])) {
+                $existing[$row['uuid']] = true;
+            }
+        }
+
+        // Return map for all requested UUIDs
+        $result = [];
+        foreach ($uuids as $uuid) {
+            $result[$uuid] = isset($existing[$uuid]);
+        }
+
+        return $result;
+    }
 }

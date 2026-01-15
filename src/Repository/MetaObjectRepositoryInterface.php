@@ -115,4 +115,17 @@ interface MetaObjectRepositoryInterface
         array $filters = [],
         bool $includeDeleted = false,
     ): int;
+
+    /**
+     * Check which UUIDs exist (not deleted) for a given type in project/org scope.
+     *
+     * @param string[] $uuids
+     * @return array<string, bool> UUID => exists
+     */
+    public function checkUuidsExist(
+        array $uuids,
+        string $objectType,
+        ?int $projectId,
+        string $organizationId,
+    ): array;
 }

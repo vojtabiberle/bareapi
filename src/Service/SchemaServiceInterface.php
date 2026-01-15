@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Bareapi\Service;
 
 use Bareapi\Entity\Schema;
+use Bareapi\Schema\RefersToDefinition;
 
 interface SchemaServiceInterface
 {
@@ -56,4 +57,12 @@ interface SchemaServiceInterface
      * Check if a schema exists for the given object type.
      */
     public function schemaExists(string $objectType): bool;
+
+    /**
+     * Get all refersTo definitions for an object type.
+     *
+     * @return RefersToDefinition[]
+     * @throws \Bareapi\Exception\SchemaNotFoundException
+     */
+    public function getRefersToDefinitions(string $objectType): array;
 }
