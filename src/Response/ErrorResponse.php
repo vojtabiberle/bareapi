@@ -59,12 +59,55 @@ class ErrorResponse
         return self::create(404, $message);
     }
 
+    public static function conflict(string $message = 'Conflict'): JsonResponse
+    {
+        return self::create(409, $message);
+    }
+
     /**
      * @param array<int, array{path?: string, message: string, code?: string}> $errors
      */
     public static function validationError(array $errors): JsonResponse
     {
         return self::create(422, 'Validation failed', $errors);
+    }
+
+    /**
+     * Create validation error from raw exception errors.
+     *
+     * @param array<string, mixed> $rawErrors
+     */
+    public static function validationErrorFromRaw(array $rawErrors): JsonResponse
+    {
+        $errors = [];
+
+        // Check if it's structured like ['errors' => [...]]
+        if (isset($rawErrors['errors']) && is_array($rawErrors['errors'])) {
+            foreach ($rawErrors['errors'] as $error) {
+                if (is_string($error)) {
+                    $errors[] = [
+                        'message' => $error,
+                    ];
+                } elseif (is_array($error) && isset($error['message'])) {
+                    /** @var array{path?: string, message: string, code?: string} $error */
+                    $errors[] = $error;
+                }
+            }
+        } else {
+            // Assume it's a flat array of messages
+            foreach ($rawErrors as $key => $value) {
+                if (is_string($value)) {
+                    $errors[] = [
+                        'message' => $value,
+                    ];
+                } elseif (is_array($value) && isset($value['message'])) {
+                    /** @var array{path?: string, message: string, code?: string} $value */
+                    $errors[] = $value;
+                }
+            }
+        }
+
+        return self::validationError($errors);
     }
 
     public static function internalError(string $message = 'Internal Server Error'): JsonResponse
