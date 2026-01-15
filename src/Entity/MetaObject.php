@@ -224,14 +224,32 @@ class MetaObject implements JsonSerializable
     {
         $filtered = $this->revisions->filter(fn (MetaObjectRevision $r) => $r->getDeletedAt() === null);
 
-        return $filtered->first() ?: null;
+        if ($filtered->isEmpty()) {
+            return null;
+        }
+
+        // Find the revision with the highest revision number
+        // Can't rely on collection ordering after in-memory additions
+        $latest = null;
+        foreach ($filtered as $revision) {
+            if ($latest === null || $revision->getRevision() > $latest->getRevision()) {
+                $latest = $revision;
+            }
+        }
+
+        return $latest;
     }
 
     public function getNextRevisionNumber(): int
     {
-        $latest = $this->revisions->first();
+        $maxRevision = 0;
+        foreach ($this->revisions as $revision) {
+            if ($revision->getRevision() > $maxRevision) {
+                $maxRevision = $revision->getRevision();
+            }
+        }
 
-        return $latest instanceof MetaObjectRevision ? $latest->getRevision() + 1 : 1;
+        return $maxRevision + 1;
     }
 
     /**

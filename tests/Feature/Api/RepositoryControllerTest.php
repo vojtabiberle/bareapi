@@ -73,7 +73,7 @@ class RepositoryControllerTest extends FeatureTestCase
             '/api/v1/repository/notes',
             [],
             [],
-            $this->authHeaders()
+            array_merge($this->authHeaders(), ['HTTP_X-Project-ID' => '123'])
         );
 
         $this->assertResponseIsSuccessful();
