@@ -14,7 +14,7 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class RepositoryControllerTest extends FeatureTestCase
 {
-    private const API_KEY = 'default-api-key-change-me';
+    private const API_KEY = 'test-api-key-for-ci';
     private const CONTENT_TYPE = 'application/vnd.api+json';
 
     private EntityManagerInterface $em;

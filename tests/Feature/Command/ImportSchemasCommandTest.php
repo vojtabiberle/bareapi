@@ -55,7 +55,7 @@ class ImportSchemasCommandTest extends FeatureTestCase
 
         $this->commandTester->execute([
             '--directory' => $this->tempDir,
-            '--version' => '1.0.0',
+            '--schema-version' => '1.0.0',
         ]);
 
         $this->assertSame(0, $this->commandTester->getStatusCode());
@@ -88,7 +88,7 @@ class ImportSchemasCommandTest extends FeatureTestCase
 
         $this->commandTester->execute([
             '--directory' => $this->tempDir,
-            '--version' => '2.5.0',
+            '--schema-version' => '2.5.0',
         ]);
 
         $this->assertSame(0, $this->commandTester->getStatusCode());

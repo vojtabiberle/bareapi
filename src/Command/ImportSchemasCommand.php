@@ -37,7 +37,7 @@ class ImportSchemasCommand extends Command
                 $this->projectDir . '/config/schemas'
             )
             ->addOption(
-                'version',
+                'schema-version',
                 null,
                 InputOption::VALUE_REQUIRED,
                 'Version to assign to imported schemas',
@@ -64,7 +64,7 @@ class ImportSchemasCommand extends Command
         /** @var string $directory */
         $directory = $input->getOption('directory');
         /** @var string $version */
-        $version = $input->getOption('version');
+        $version = $input->getOption('schema-version');
         $force = (bool) $input->getOption('force');
         $dryRun = (bool) $input->getOption('dry-run');
 
