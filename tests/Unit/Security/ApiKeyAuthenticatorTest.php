@@ -114,8 +114,13 @@ final class ApiKeyAuthenticatorTest extends TestCase
         $exception = new CustomUserMessageAuthenticationException('Invalid API key');
 
         $result = $this->authenticator->onAuthenticationFailure($request, $exception);
+        $this->assertNotNull($result);
 
-        $data = json_decode($result->getContent(), true);
+        $content = $result->getContent();
+        $this->assertIsString($content);
+        $data = json_decode($content, true);
+        \assert(\is_array($data));
+
         $this->assertSame(401, $data['error']);
         $this->assertSame('401', $data['code']);
         $this->assertSame('Invalid API key', $data['message']);

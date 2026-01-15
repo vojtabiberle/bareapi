@@ -26,8 +26,10 @@ class HealthCheckControllerTest extends FeatureTestCase
         $this->assertResponseIsSuccessful();
         $data = $this->getJsonResponse();
         $this->assertArrayHasKey('checks', $data);
-        $this->assertArrayHasKey('database', $data['checks']);
-        $this->assertSame('ok', $data['checks']['database']);
+        $checks = $data['checks'];
+        \assert(\is_array($checks));
+        $this->assertArrayHasKey('database', $checks);
+        $this->assertSame('ok', $checks['database']);
     }
 
     public function testHealthCheckDoesNotRequireAuthentication(): void
@@ -82,8 +84,12 @@ class HealthCheckControllerTest extends FeatureTestCase
     private function getJsonResponse(): array
     {
         $content = $this->client->getResponse()->getContent();
+        if ($content === false) {
+            return [];
+        }
         $decoded = json_decode($content, true);
 
-        return is_array($decoded) ? $decoded : [];
+        /** @var array<string, mixed> */
+        return \is_array($decoded) ? $decoded : [];
     }
 }

@@ -23,7 +23,9 @@ class RepositoryControllerTest extends FeatureTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->em = self::getContainer()->get(EntityManagerInterface::class);
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        \assert($em instanceof EntityManagerInterface);
+        $this->em = $em;
         $this->apiKey = $this->getApiKeyFromContainer();
     }
 
@@ -34,10 +36,12 @@ class RepositoryControllerTest extends FeatureTestCase
     private function getApiKeyFromContainer(): string
     {
         $authenticator = self::getContainer()->get(ApiKeyAuthenticator::class);
+        \assert($authenticator instanceof ApiKeyAuthenticator);
         $reflection = new \ReflectionClass($authenticator);
         $property = $reflection->getProperty('apiKey');
+        $value = $property->getValue($authenticator);
 
-        return $property->getValue($authenticator);
+        return \is_string($value) ? $value : '';
     }
 
     // ==================== LIST Tests ====================
@@ -154,7 +158,7 @@ class RepositoryControllerTest extends FeatureTestCase
                 'HTTP_X-Organization-ID' => 'org-abc',
                 'CONTENT_TYPE' => 'application/json',
             ]),
-            json_encode([
+            $this->jsonEncode([
                 'name' => 'my-note',
                 'data' => ['title' => 'Test Note', 'content' => 'Hello World'],
             ])
@@ -182,7 +186,7 @@ class RepositoryControllerTest extends FeatureTestCase
                 'HTTP_X-Organization-ID' => 'my-org',
                 'CONTENT_TYPE' => 'application/json',
             ]),
-            json_encode([
+            $this->jsonEncode([
                 'name' => 'org-note',
                 'data' => ['title' => 'Org Note'],
             ])
@@ -203,7 +207,7 @@ class RepositoryControllerTest extends FeatureTestCase
             [],
             [],
             array_merge($this->authHeaders(), ['CONTENT_TYPE' => 'application/json']),
-            json_encode([
+            $this->jsonEncode([
                 'name' => 'branch-note',
                 'data' => ['title' => 'Branch Note'],
                 'branch' => 'feature-x',
@@ -223,7 +227,7 @@ class RepositoryControllerTest extends FeatureTestCase
             [],
             [],
             array_merge($this->authHeaders(), ['CONTENT_TYPE' => 'application/json']),
-            json_encode(['name' => 'test', 'data' => []])
+            $this->jsonEncode(['name' => 'test', 'data' => []])
         );
 
         $this->assertResponseStatusCodeSame(404);
@@ -239,7 +243,7 @@ class RepositoryControllerTest extends FeatureTestCase
             [],
             [],
             array_merge($this->authHeaders(), ['CONTENT_TYPE' => 'application/json']),
-            json_encode([
+            $this->jsonEncode([
                 'name' => 'invalid-note',
                 'data' => ['content' => 'Missing required title'],
             ])
@@ -264,7 +268,7 @@ class RepositoryControllerTest extends FeatureTestCase
                 'HTTP_X-Organization-ID' => 'org-123',
                 'CONTENT_TYPE' => 'application/json',
             ]),
-            json_encode([
+            $this->jsonEncode([
                 'name' => 'duplicate-name',
                 'data' => ['title' => 'Another Note'],
             ])
@@ -283,7 +287,7 @@ class RepositoryControllerTest extends FeatureTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            json_encode(['name' => 'test', 'data' => ['title' => 'Test']])
+            $this->jsonEncode(['name' => 'test', 'data' => ['title' => 'Test']])
         );
 
         $this->assertResponseStatusCodeSame(401);
@@ -357,7 +361,7 @@ class RepositoryControllerTest extends FeatureTestCase
             [],
             [],
             array_merge($this->authHeaders(), ['CONTENT_TYPE' => 'application/json']),
-            json_encode([
+            $this->jsonEncode([
                 'data' => ['content' => 'Updated Content'],
             ])
         );
@@ -379,7 +383,7 @@ class RepositoryControllerTest extends FeatureTestCase
             [],
             [],
             array_merge($this->authHeaders(), ['CONTENT_TYPE' => 'application/json']),
-            json_encode([
+            $this->jsonEncode([
                 'data' => ['content' => 'New content'],
             ])
         );
@@ -399,7 +403,7 @@ class RepositoryControllerTest extends FeatureTestCase
             [],
             [],
             array_merge($this->authHeaders(), ['CONTENT_TYPE' => 'application/json']),
-            json_encode(['data' => ['title' => 'Test']])
+            $this->jsonEncode(['data' => ['title' => 'Test']])
         );
 
         $this->assertResponseStatusCodeSame(404);
@@ -420,7 +424,7 @@ class RepositoryControllerTest extends FeatureTestCase
             [],
             [],
             array_merge($this->authHeaders(), ['CONTENT_TYPE' => 'application/json']),
-            json_encode([
+            $this->jsonEncode([
                 'data' => ['title' => null], // null will fail validation
             ])
         );
@@ -445,7 +449,7 @@ class RepositoryControllerTest extends FeatureTestCase
             [],
             [],
             array_merge($this->authHeaders(), ['CONTENT_TYPE' => 'application/json']),
-            json_encode([
+            $this->jsonEncode([
                 'name' => 'updated-name',
                 'data' => ['title' => 'New Title'],
             ])
@@ -469,7 +473,7 @@ class RepositoryControllerTest extends FeatureTestCase
             [],
             [],
             array_merge($this->authHeaders(), ['CONTENT_TYPE' => 'application/json']),
-            json_encode([
+            $this->jsonEncode([
                 'name' => 'new-name',
                 'data' => ['title' => 'Updated'],
             ])
@@ -490,7 +494,7 @@ class RepositoryControllerTest extends FeatureTestCase
             [],
             [],
             array_merge($this->authHeaders(), ['CONTENT_TYPE' => 'application/json']),
-            json_encode(['name' => 'test', 'data' => ['title' => 'Test']])
+            $this->jsonEncode(['name' => 'test', 'data' => ['title' => 'Test']])
         );
 
         $this->assertResponseStatusCodeSame(404);
@@ -608,8 +612,12 @@ class RepositoryControllerTest extends FeatureTestCase
     private function getJsonResponse(): array
     {
         $content = $this->client->getResponse()->getContent();
+        if ($content === false) {
+            return [];
+        }
         $decoded = json_decode($content, true);
 
+        /** @var array<string, mixed> */
         return is_array($decoded) ? $decoded : [];
     }
 
@@ -644,5 +652,15 @@ class RepositoryControllerTest extends FeatureTestCase
         $this->em->flush();
 
         return $metaObject;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function jsonEncode(array $data): string
+    {
+        $encoded = json_encode($data);
+
+        return $encoded !== false ? $encoded : '{}';
     }
 }

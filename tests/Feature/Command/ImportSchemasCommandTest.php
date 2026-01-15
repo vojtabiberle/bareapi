@@ -28,7 +28,9 @@ class ImportSchemasCommandTest extends FeatureTestCase
         $command = $application->find('metastore:import-schemas');
         $this->commandTester = new CommandTester($command);
 
-        $this->em = self::getContainer()->get(EntityManagerInterface::class);
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        \assert($em instanceof EntityManagerInterface);
+        $this->em = $em;
         $this->filesystem = new Filesystem();
 
         // Create temp directory for test schemas
@@ -220,9 +222,12 @@ class ImportSchemasCommandTest extends FeatureTestCase
      */
     private function createSchemaFile(string $objectType, array $schemaData): void
     {
-        file_put_contents(
-            $this->tempDir . '/' . $objectType . '.json',
-            json_encode($schemaData, JSON_PRETTY_PRINT)
-        );
+        $encoded = json_encode($schemaData, JSON_PRETTY_PRINT);
+        if ($encoded !== false) {
+            file_put_contents(
+                $this->tempDir . '/' . $objectType . '.json',
+                $encoded
+            );
+        }
     }
 }

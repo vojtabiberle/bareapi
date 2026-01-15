@@ -17,7 +17,9 @@ class SchemaControllerTest extends FeatureTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->em = self::getContainer()->get(EntityManagerInterface::class);
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        \assert($em instanceof EntityManagerInterface);
+        $this->em = $em;
     }
 
     // ==================== Get Default Schema Tests ====================
@@ -196,8 +198,12 @@ class SchemaControllerTest extends FeatureTestCase
     private function getJsonResponse(): array
     {
         $content = $this->client->getResponse()->getContent();
+        if ($content === false) {
+            return [];
+        }
         $decoded = json_decode($content, true);
 
-        return is_array($decoded) ? $decoded : [];
+        /** @var array<string, mixed> */
+        return \is_array($decoded) ? $decoded : [];
     }
 }

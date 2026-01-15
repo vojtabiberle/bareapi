@@ -61,7 +61,7 @@ final class JsonApiSerializerTest extends TestCase
         $response = $this->createTestResponse();
 
         $result = $this->serializer->success($response);
-        $data = json_decode($result->getContent(), true);
+        $data = $this->decodeResponse($result);
 
         $this->assertArrayHasKey('data', $data);
         $this->assertArrayHasKey('type', $data['data']);
@@ -78,7 +78,7 @@ final class JsonApiSerializerTest extends TestCase
         ];
 
         $result = $this->serializer->success($responses);
-        $data = json_decode($result->getContent(), true);
+        $data = $this->decodeResponse($result);
 
         $this->assertArrayHasKey('data', $data);
         $this->assertIsArray($data['data']);
@@ -93,7 +93,7 @@ final class JsonApiSerializerTest extends TestCase
         $response = $this->createTestResponse('test-uuid', 'notes', '1.0.0', 'my-note');
 
         $result = $this->serializer->success($response);
-        $data = json_decode($result->getContent(), true);
+        $data = $this->decodeResponse($result);
 
         $this->assertSame('notes', $data['data']['type']);
         $this->assertSame('test-uuid', $data['data']['id']);
@@ -111,7 +111,7 @@ final class JsonApiSerializerTest extends TestCase
         $response = $this->createTestResponse('abc-123', 'notes');
 
         $result = $this->serializer->success($response);
-        $data = json_decode($result->getContent(), true);
+        $data = $this->decodeResponse($result);
 
         $this->assertSame('https://api.example.com/api/v1/repository/notes/abc-123', $data['data']['links']['self']);
     }
@@ -122,7 +122,7 @@ final class JsonApiSerializerTest extends TestCase
         $response = $this->createTestResponse('uuid', 'notes', '2.0.0');
 
         $result = $this->serializer->success($response);
-        $data = json_decode($result->getContent(), true);
+        $data = $this->decodeResponse($result);
 
         $this->assertArrayHasKey('relationships', $data['data']);
         $this->assertArrayHasKey('schema', $data['data']['relationships']);
@@ -136,7 +136,7 @@ final class JsonApiSerializerTest extends TestCase
         $response = $this->createTestResponse(revision: 5);
 
         $result = $this->serializer->success($response);
-        $data = json_decode($result->getContent(), true);
+        $data = $this->decodeResponse($result);
 
         $this->assertArrayHasKey('revisions', $data['data']['relationships']);
         $this->assertSame('revisions', $data['data']['relationships']['revisions']['data']['type']);
@@ -149,7 +149,7 @@ final class JsonApiSerializerTest extends TestCase
         $response = $this->createTestResponse(projectId: 123);
 
         $result = $this->serializer->success($response);
-        $data = json_decode($result->getContent(), true);
+        $data = $this->decodeResponse($result);
 
         $this->assertArrayHasKey('project', $data['data']['relationships']);
         $this->assertSame('projects', $data['data']['relationships']['project']['data']['type']);
@@ -162,7 +162,7 @@ final class JsonApiSerializerTest extends TestCase
         $response = $this->createTestResponse(projectId: null);
 
         $result = $this->serializer->success($response);
-        $data = json_decode($result->getContent(), true);
+        $data = $this->decodeResponse($result);
 
         $this->assertArrayNotHasKey('project', $data['data']['relationships']);
     }
@@ -178,7 +178,7 @@ final class JsonApiSerializerTest extends TestCase
         );
 
         $result = $this->serializer->success($response);
-        $data = json_decode($result->getContent(), true);
+        $data = $this->decodeResponse($result);
 
         $this->assertSame('2024-01-15T10:30:00+00:00', $data['data']['attributes']['lastUpdated']);
         $this->assertSame('2024-01-15T10:30:00+00:00', $data['data']['attributes']['createdAt']);
@@ -201,7 +201,7 @@ final class JsonApiSerializerTest extends TestCase
         $response = $this->createTestResponse('uuid', 'notes');
 
         $result = $this->serializer->success($response);
-        $data = json_decode($result->getContent(), true);
+        $data = $this->decodeResponse($result);
 
         $this->assertSame('/api/v1/repository/notes/uuid', $data['data']['links']['self']);
     }
@@ -213,11 +213,14 @@ final class JsonApiSerializerTest extends TestCase
         $response = $this->createTestResponse(data: $responseData);
 
         $result = $this->serializer->success($response);
-        $decoded = json_decode($result->getContent(), true);
+        $decoded = $this->decodeResponse($result);
 
         $this->assertSame($responseData, $decoded['data']['attributes']['data']);
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     private function createTestResponse(
         string $uuid = 'test-uuid-123',
         string $objectType = 'notes',
@@ -247,5 +250,20 @@ final class JsonApiSerializerTest extends TestCase
             data: $data,
             revisionCreatedAt: $revisionCreatedAt ?? $now,
         );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function decodeResponse(JsonResponse $response): array
+    {
+        $content = $response->getContent();
+        if ($content === false) {
+            return [];
+        }
+        $decoded = json_decode($content, true);
+
+        /** @var array<string, mixed> */
+        return \is_array($decoded) ? $decoded : [];
     }
 }

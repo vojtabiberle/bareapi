@@ -1,0 +1,85 @@
+parameters:
+    level: max
+    paths:
+        - src
+        - tests
+
+    # Ignore common test-related issues
+    ignoreErrors:
+        # Allow accessing array offsets on mixed - common in test assertions with json_decode
+        - '#Cannot access offset .+ on mixed#'
+
+        # json_decode in tests - getContent() returns string|false
+        -
+            message: '#Parameter \#1 \$json of function json_decode expects string, string\|false given#'
+            path: tests/*
+
+        # file_get_contents returns string|false
+        -
+            message: '#Parameter \#1 \$json of function json_decode expects string, string\|false given#'
+            path: src/*
+            reportUnmatched: false
+
+        # json_encode returns string|false
+        -
+            message: '#Parameter .+ expects string(\|null)?, string\|false given#'
+            path: tests/*
+            reportUnmatched: false
+
+        # Allow assertArrayHasKey with mixed
+        -
+            message: '#Parameter \#2 \$array of method PHPUnit\\Framework\\Assert::assertArrayHasKey\(\) expects array.+, mixed given#'
+            reportUnmatched: false
+
+        # Allow assertArrayNotHasKey with mixed
+        -
+            message: '#Parameter \#2 \$array of method PHPUnit\\Framework\\Assert::assertArrayNotHasKey\(\) expects array.+, mixed given#'
+            reportUnmatched: false
+
+        # Allow assertCount with mixed (multiple patterns)
+        -
+            message: '#Parameter \#2 \$haystack of method PHPUnit\\Framework\\Assert::assertCount\(\) expects Countable\|iterable, mixed given#'
+            path: tests/*
+
+        # Allow assertMatchesRegularExpression with mixed
+        -
+            message: '#Parameter \#2 \$string of method PHPUnit\\Framework\\Assert::assertMatchesRegularExpression\(\) expects string, mixed given#'
+            reportUnmatched: false
+
+        # Allow assertStringContainsString with mixed
+        -
+            message: '#Parameter \#2 \$haystack of method PHPUnit\\Framework\\Assert::assertStringContainsString\(\) expects string, mixed given#'
+            path: tests/*
+
+        # Property/method access on null/mixed in tests
+        -
+            message: '#Cannot call method .+ on .+\|null#'
+            path: tests/*
+
+        # Property access on null/mixed in tests
+        -
+            message: '#Cannot access property .+ on .+\|null#'
+            path: tests/*
+
+        # array_map with mixed
+        -
+            message: '#Parameter \#2 \$array of function array_map expects array, mixed given#'
+            path: tests/*
+
+        # Kernel|null for Application constructor
+        -
+            message: '#Parameter \#1 \$kernel of class Symfony\\Bundle\\FrameworkBundle\\Console\\Application constructor expects .+KernelInterface, .+KernelInterface\|null given#'
+            path: tests/*
+
+        # Validation exception array types in tests
+        -
+            message: '#Parameter \#1 \$(errors|rawErrors) of (class|static method) Bareapi\\(Exception\\ValidationException|Response\\ErrorResponse).+ expects array<string, mixed>, array<int,.+> given#'
+            path: tests/*
+
+        # Missing iterable value type in anonymous classes
+        -
+            message: '#Method class@anonymous.+toArray\(\) return type has no value type specified in iterable type array#'
+            path: tests/*
+
+    # Treat warnings as errors
+    treatPhpDocTypesAsCertain: false
