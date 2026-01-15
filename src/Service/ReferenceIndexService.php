@@ -16,7 +16,7 @@ use Ramsey\Uuid\Uuid;
  * After each successful write operation, this service syncs the reference
  * index to ensure fast inbound lookups, delete cascade planning, and counts.
  */
-final class ReferenceIndexService
+final class ReferenceIndexService implements ReferenceIndexServiceInterface
 {
     public function __construct(
         private MetaRefRepositoryInterface $metaRefRepository,
@@ -130,6 +130,11 @@ final class ReferenceIndexService
         if (empty($segments)) {
             if (is_string($current) && $current !== '') {
                 return [$current];
+            }
+
+            // Handle arrays of strings at leaf positions (e.g., tag_ids: [uuid1, uuid2])
+            if (is_array($current) && array_is_list($current)) {
+                return array_values(array_filter($current, fn ($v) => is_string($v) && $v !== ''));
             }
 
             return [];

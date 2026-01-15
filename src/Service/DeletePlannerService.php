@@ -10,6 +10,7 @@ use Bareapi\Exception\DeleteRestrictedException;
 use Bareapi\Repository\MetaObjectRepositoryInterface;
 use Bareapi\Repository\MetaRefRepositoryInterface;
 use Bareapi\Schema\OnDeleteBehavior;
+use Bareapi\Service\ReferenceIndexServiceInterface;
 
 /**
  * Plans and executes delete operations with referential integrity.
@@ -29,7 +30,7 @@ final class DeletePlannerService
         private MetaObjectRepositoryInterface $metaObjectRepository,
         private MetaRefRepositoryInterface $metaRefRepository,
         private SchemaServiceInterface $schemaService,
-        private ReferenceIndexService $referenceIndexService,
+        private ReferenceIndexServiceInterface $referenceIndexService,
     ) {
     }
 
