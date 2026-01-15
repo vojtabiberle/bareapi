@@ -1,5 +1,6 @@
 parameters:
     env(APP_SECRET): 'change_me'
+    env(API_KEY): 'default-api-key-change-me'
 
 services:
     _defaults:
@@ -7,6 +8,7 @@ services:
         autoconfigure: true
         bind:
             $projectDir: '%kernel.project_dir%'
+            $apiKey: '%env(API_KEY)%'
 
     Bareapi\Service\SchemaService:
         arguments:

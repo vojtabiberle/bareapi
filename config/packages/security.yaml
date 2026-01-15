@@ -1,0 +1,28 @@
+security:
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+
+    providers:
+        api_key_user_provider:
+            id: Bareapi\Security\ApiKeyUserProvider
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
+        public:
+            pattern: ^/(health-check|api/v1/schema|$)
+            security: false
+
+        api:
+            pattern: ^/api/v1/repository
+            stateless: true
+            custom_authenticators:
+                - Bareapi\Security\ApiKeyAuthenticator
+
+        main:
+            lazy: true
+
+    access_control:
+        - { path: ^/api/v1/repository, roles: ROLE_API_USER }
