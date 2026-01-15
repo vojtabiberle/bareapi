@@ -51,8 +51,13 @@ final class ErrorResponseTest extends TestCase
     public function testCreateIncludesErrorsArrayWhenProvided(): void
     {
         $errors = [
-            ['path' => '/title', 'message' => 'Title is required'],
-            ['message' => 'Invalid format'],
+            [
+                'path' => '/title',
+                'message' => 'Title is required',
+            ],
+            [
+                'message' => 'Invalid format',
+            ],
         ];
 
         $response = ErrorResponse::create(422, 'Validation failed', $errors);
@@ -131,8 +136,13 @@ final class ErrorResponseTest extends TestCase
     public function testValidationErrorReturns422WithErrorsArray(): void
     {
         $errors = [
-            ['path' => '/title', 'message' => 'Required field'],
-            ['message' => 'Must be a string'],
+            [
+                'path' => '/title',
+                'message' => 'Required field',
+            ],
+            [
+                'message' => 'Must be a string',
+            ],
         ];
 
         $response = ErrorResponse::validationError($errors);
@@ -147,8 +157,13 @@ final class ErrorResponseTest extends TestCase
     {
         $rawErrors = [
             'errors' => [
-                ['path' => '/name', 'message' => 'Name is required'],
-                ['message' => 'Invalid data'],
+                [
+                    'path' => '/name',
+                    'message' => 'Name is required',
+                ],
+                [
+                    'message' => 'Invalid data',
+                ],
             ],
         ];
 
@@ -178,8 +193,13 @@ final class ErrorResponseTest extends TestCase
     public function testValidationErrorFromRawHandlesArrayWithMessageObjects(): void
     {
         $rawErrors = [
-            ['message' => 'First error', 'path' => '/field1'],
-            ['message' => 'Second error'],
+            [
+                'message' => 'First error',
+                'path' => '/field1',
+            ],
+            [
+                'message' => 'Second error',
+            ],
         ];
 
         $response = ErrorResponse::validationErrorFromRaw($rawErrors);

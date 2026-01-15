@@ -12,18 +12,26 @@ final class UpdatePatchRequestTest extends TestCase
     public function testConstructorStoresDataAndSchemaVersion(): void
     {
         $request = new UpdatePatchRequest(
-            data: ['title' => 'Updated'],
+            data: [
+                'title' => 'Updated',
+            ],
             schemaVersion: '2.0.0'
         );
 
-        $this->assertSame(['title' => 'Updated'], $request->data);
+        $this->assertSame([
+            'title' => 'Updated',
+        ], $request->data);
         $this->assertSame('2.0.0', $request->schemaVersion);
     }
 
     public function testFromArrayExtractsDataArrayCorrectly(): void
     {
-        $data = ['content' => 'New content'];
-        $request = UpdatePatchRequest::fromArray(['data' => $data]);
+        $data = [
+            'content' => 'New content',
+        ];
+        $request = UpdatePatchRequest::fromArray([
+            'data' => $data,
+        ]);
 
         $this->assertSame($data, $request->data);
     }
@@ -47,14 +55,18 @@ final class UpdatePatchRequestTest extends TestCase
 
     public function testFromArrayReturnsNullForMissingSchemaVersion(): void
     {
-        $request = UpdatePatchRequest::fromArray(['data' => []]);
+        $request = UpdatePatchRequest::fromArray([
+            'data' => [],
+        ]);
 
         $this->assertNull($request->schemaVersion);
     }
 
     public function testFromArrayHandlesNonArrayDataValues(): void
     {
-        $request = UpdatePatchRequest::fromArray(['data' => 'string-value']);
+        $request = UpdatePatchRequest::fromArray([
+            'data' => 'string-value',
+        ]);
 
         $this->assertSame([], $request->data);
     }
@@ -71,7 +83,9 @@ final class UpdatePatchRequestTest extends TestCase
 
     public function testConstructorDefaultsSchemaVersionToNull(): void
     {
-        $request = new UpdatePatchRequest(data: ['key' => 'value']);
+        $request = new UpdatePatchRequest(data: [
+            'key' => 'value',
+        ]);
 
         $this->assertNull($request->schemaVersion);
     }

@@ -64,7 +64,10 @@ final class JsonFormatterTest extends TestCase
 
     public function testFormatIncludesContextWhenNotEmpty(): void
     {
-        $context = ['user_id' => 123, 'action' => 'login'];
+        $context = [
+            'user_id' => 123,
+            'action' => 'login',
+        ];
         $record = $this->createLogRecord('Test', context: $context);
 
         $result = $this->formatter->format($record);
@@ -87,7 +90,9 @@ final class JsonFormatterTest extends TestCase
 
     public function testFormatIncludesExtraWhenNotEmpty(): void
     {
-        $extra = ['request_id' => 'abc-123'];
+        $extra = [
+            'request_id' => 'abc-123',
+        ];
         $record = $this->createLogRecord('Test', extra: $extra);
 
         $result = $this->formatter->format($record);
@@ -110,7 +115,9 @@ final class JsonFormatterTest extends TestCase
     public function testNormalizeArrayConvertsThrowableToStructuredArray(): void
     {
         $exception = new \RuntimeException('Test error', 42);
-        $record = $this->createLogRecord('Error occurred', context: ['exception' => $exception]);
+        $record = $this->createLogRecord('Error occurred', context: [
+            'exception' => $exception,
+        ]);
 
         $result = $this->formatter->format($record);
         $data = json_decode(trim($result), true);
@@ -125,7 +132,9 @@ final class JsonFormatterTest extends TestCase
     public function testNormalizeArrayConvertsDateTimeInterfaceToRfc3339String(): void
     {
         $date = new DateTimeImmutable('2024-06-15T14:30:00+00:00');
-        $record = $this->createLogRecord('Test', context: ['created_at' => $date]);
+        $record = $this->createLogRecord('Test', context: [
+            'created_at' => $date,
+        ]);
 
         $result = $this->formatter->format($record);
         $data = json_decode(trim($result), true);
@@ -135,13 +144,15 @@ final class JsonFormatterTest extends TestCase
 
     public function testNormalizeArrayCallsToStringOnObjectsWithThatMethod(): void
     {
-        $object = new class {
+        $object = new class() {
             public function __toString(): string
             {
                 return 'StringableObject';
             }
         };
-        $record = $this->createLogRecord('Test', context: ['object' => $object]);
+        $record = $this->createLogRecord('Test', context: [
+            'object' => $object,
+        ]);
 
         $result = $this->formatter->format($record);
         $data = json_decode(trim($result), true);
@@ -151,24 +162,34 @@ final class JsonFormatterTest extends TestCase
 
     public function testNormalizeArrayCallsToArrayOnObjectsWithThatMethod(): void
     {
-        $object = new class {
+        $object = new class() {
             public function toArray(): array
             {
-                return ['key' => 'value', 'number' => 42];
+                return [
+                    'key' => 'value',
+                    'number' => 42,
+                ];
             }
         };
-        $record = $this->createLogRecord('Test', context: ['object' => $object]);
+        $record = $this->createLogRecord('Test', context: [
+            'object' => $object,
+        ]);
 
         $result = $this->formatter->format($record);
         $data = json_decode(trim($result), true);
 
-        $this->assertSame(['key' => 'value', 'number' => 42], $data['context']['object']);
+        $this->assertSame([
+            'key' => 'value',
+            'number' => 42,
+        ], $data['context']['object']);
     }
 
     public function testNormalizeArrayReturnsClassNameForOtherObjects(): void
     {
         $object = new \stdClass();
-        $record = $this->createLogRecord('Test', context: ['object' => $object]);
+        $record = $this->createLogRecord('Test', context: [
+            'object' => $object,
+        ]);
 
         $result = $this->formatter->format($record);
         $data = json_decode(trim($result), true);

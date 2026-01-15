@@ -13,14 +13,18 @@ final class CreateRequestTest extends TestCase
     {
         $request = new CreateRequest(
             name: 'my-object',
-            data: ['title' => 'Test'],
+            data: [
+                'title' => 'Test',
+            ],
             schemaVersion: '1.0.0',
             branch: 'feature',
             scope: 'project'
         );
 
         $this->assertSame('my-object', $request->name);
-        $this->assertSame(['title' => 'Test'], $request->data);
+        $this->assertSame([
+            'title' => 'Test',
+        ], $request->data);
         $this->assertSame('1.0.0', $request->schemaVersion);
         $this->assertSame('feature', $request->branch);
         $this->assertSame('project', $request->scope);
@@ -28,15 +32,24 @@ final class CreateRequestTest extends TestCase
 
     public function testFromArrayExtractsNameCorrectly(): void
     {
-        $request = CreateRequest::fromArray(['name' => 'test-name', 'data' => []]);
+        $request = CreateRequest::fromArray([
+            'name' => 'test-name',
+            'data' => [],
+        ]);
 
         $this->assertSame('test-name', $request->name);
     }
 
     public function testFromArrayExtractsDataArrayCorrectly(): void
     {
-        $data = ['title' => 'Test', 'content' => 'Hello'];
-        $request = CreateRequest::fromArray(['name' => 'test', 'data' => $data]);
+        $data = [
+            'title' => 'Test',
+            'content' => 'Hello',
+        ];
+        $request = CreateRequest::fromArray([
+            'name' => 'test',
+            'data' => $data,
+        ]);
 
         $this->assertSame($data, $request->data);
     }
@@ -76,21 +89,28 @@ final class CreateRequestTest extends TestCase
 
     public function testFromArrayReturnsEmptyStringForMissingName(): void
     {
-        $request = CreateRequest::fromArray(['data' => []]);
+        $request = CreateRequest::fromArray([
+            'data' => [],
+        ]);
 
         $this->assertSame('', $request->name);
     }
 
     public function testFromArrayReturnsEmptyArrayForMissingData(): void
     {
-        $request = CreateRequest::fromArray(['name' => 'test']);
+        $request = CreateRequest::fromArray([
+            'name' => 'test',
+        ]);
 
         $this->assertSame([], $request->data);
     }
 
     public function testFromArrayReturnsNullForMissingOptionalFields(): void
     {
-        $request = CreateRequest::fromArray(['name' => 'test', 'data' => []]);
+        $request = CreateRequest::fromArray([
+            'name' => 'test',
+            'data' => [],
+        ]);
 
         $this->assertNull($request->schemaVersion);
         $this->assertNull($request->branch);
@@ -99,14 +119,20 @@ final class CreateRequestTest extends TestCase
 
     public function testFromArrayHandlesNonStringValuesForName(): void
     {
-        $request = CreateRequest::fromArray(['name' => 123, 'data' => []]);
+        $request = CreateRequest::fromArray([
+            'name' => 123,
+            'data' => [],
+        ]);
 
         $this->assertSame('', $request->name);
     }
 
     public function testFromArrayHandlesNonArrayValuesForData(): void
     {
-        $request = CreateRequest::fromArray(['name' => 'test', 'data' => 'not-an-array']);
+        $request = CreateRequest::fromArray([
+            'name' => 'test',
+            'data' => 'not-an-array',
+        ]);
 
         $this->assertSame([], $request->data);
     }

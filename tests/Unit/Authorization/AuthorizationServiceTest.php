@@ -20,7 +20,9 @@ use PHPUnit\Framework\TestCase;
 final class AuthorizationServiceTest extends TestCase
 {
     private PolicyEvaluator&MockObject $evaluator;
+
     private AclParser&MockObject $aclParser;
+
     private AuthorizationService $service;
 
     protected function setUp(): void
@@ -45,7 +47,9 @@ final class AuthorizationServiceTest extends TestCase
             user: new ApiKeyUser('test-key', ['organization-admin']),
             projectId: 123,
             organizationId: 'org-1',
-            data: ['title' => 'Test']
+            data: [
+                'title' => 'Test',
+            ]
         );
 
         $this->addToAssertionCount(1);
@@ -70,7 +74,9 @@ final class AuthorizationServiceTest extends TestCase
             user: new ApiKeyUser('test-key', ['organization-admin']),
             projectId: 123,
             organizationId: 'org-1',
-            data: ['title' => 'Test']
+            data: [
+                'title' => 'Test',
+            ]
         );
 
         $this->addToAssertionCount(1);
@@ -95,7 +101,9 @@ final class AuthorizationServiceTest extends TestCase
             user: new ApiKeyUser('test-key', ['organization-admin']),
             projectId: 123,
             organizationId: 'org-1',
-            data: ['title' => 'Test']
+            data: [
+                'title' => 'Test',
+            ]
         );
     }
 
@@ -122,7 +130,9 @@ final class AuthorizationServiceTest extends TestCase
             user: new ApiKeyUser('test-key', ['organization-admin']),
             projectId: 123,
             organizationId: 'org-1',
-            data: ['title' => 'Test'],
+            data: [
+                'title' => 'Test',
+            ],
             requestedScope: 'project'
         );
 
@@ -157,7 +167,9 @@ final class AuthorizationServiceTest extends TestCase
             user: new ApiKeyUser('test-key', ['organization-admin']),
             projectId: 123,
             organizationId: 'org-1',
-            data: ['title' => 'Test'],
+            data: [
+                'title' => 'Test',
+            ],
             requestedScope: 'organization'
         );
 
@@ -188,7 +200,9 @@ final class AuthorizationServiceTest extends TestCase
             user: new ApiKeyUser('test-key', ['organization-admin']),
             projectId: 123,
             organizationId: 'org-1',
-            data: ['title' => 'Test'],
+            data: [
+                'title' => 'Test',
+            ],
             requestedScope: ''
         );
 

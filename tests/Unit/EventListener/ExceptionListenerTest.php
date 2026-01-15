@@ -14,8 +14,8 @@ use Bareapi\Exception\ValidationException;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
-use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 final class ExceptionListenerTest extends TestCase
 {
@@ -230,7 +230,10 @@ final class ExceptionListenerTest extends TestCase
     {
         $listener = new ExceptionListener('test');
         $errors = [
-            ['path' => '/title', 'message' => 'Required'],
+            [
+                'path' => '/title',
+                'message' => 'Required',
+            ],
         ];
         $event = $this->createExceptionEvent(
             new ValidationException($errors),

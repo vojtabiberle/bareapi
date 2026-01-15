@@ -5,11 +5,8 @@ declare(strict_types=1);
 namespace Bareapi\Tests\Unit\DTO;
 
 use Bareapi\DTO\MetaObjectResponse;
-use Bareapi\Entity\MetaObject;
-use Bareapi\Entity\MetaObjectRevision;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
-use Ramsey\Uuid\Uuid;
 
 final class MetaObjectResponseTest extends TestCase
 {
@@ -27,7 +24,9 @@ final class MetaObjectResponseTest extends TestCase
             lastUpdated: $now,
             createdAt: $now,
             revision: 1,
-            data: ['title' => 'Test'],
+            data: [
+                'title' => 'Test',
+            ],
             revisionCreatedAt: $now,
         );
 
@@ -39,7 +38,9 @@ final class MetaObjectResponseTest extends TestCase
         $this->assertSame(123, $response->projectId);
         $this->assertSame('org-456', $response->organizationId);
         $this->assertSame(1, $response->revision);
-        $this->assertSame(['title' => 'Test'], $response->data);
+        $this->assertSame([
+            'title' => 'Test',
+        ], $response->data);
     }
 
     public function testFromArrayHandlesAllFieldsFromDatabaseRow(): void
@@ -55,7 +56,9 @@ final class MetaObjectResponseTest extends TestCase
             'last_updated' => '2024-01-15T10:30:00+00:00',
             'created_at' => '2024-01-10T08:00:00+00:00',
             'revision' => 5,
-            'data' => ['title' => 'Article Title'],
+            'data' => [
+                'title' => 'Article Title',
+            ],
             'revision_created_at' => '2024-01-15T10:30:00+00:00',
         ];
 
@@ -69,7 +72,9 @@ final class MetaObjectResponseTest extends TestCase
         $this->assertSame(456, $response->projectId);
         $this->assertSame('org-789', $response->organizationId);
         $this->assertSame(5, $response->revision);
-        $this->assertSame(['title' => 'Article Title'], $response->data);
+        $this->assertSame([
+            'title' => 'Article Title',
+        ], $response->data);
     }
 
     public function testFromArrayHandlesJsonStringDataField(): void
@@ -82,12 +87,20 @@ final class MetaObjectResponseTest extends TestCase
 
         $response = MetaObjectResponse::fromArray($row);
 
-        $this->assertSame(['title' => 'JSON String', 'content' => 'Hello'], $response->data);
+        $this->assertSame([
+            'title' => 'JSON String',
+            'content' => 'Hello',
+        ], $response->data);
     }
 
     public function testFromArrayHandlesArrayDataField(): void
     {
-        $data = ['key' => 'value', 'nested' => ['a' => 1]];
+        $data = [
+            'key' => 'value',
+            'nested' => [
+                'a' => 1,
+            ],
+        ];
         $row = [
             'uuid' => 'test-uuid',
             'object_type' => 'notes',

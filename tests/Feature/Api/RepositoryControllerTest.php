@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Bareapi\Tests\Feature\Api;
 
 use Bareapi\Entity\MetaObject;
-use Bareapi\Entity\MetaObjectRevision;
 use Bareapi\Entity\Schema;
 use Bareapi\Security\ApiKeyAuthenticator;
 use Bareapi\Tests\Factory\MetaObjectFactory;
@@ -18,6 +17,7 @@ class RepositoryControllerTest extends FeatureTestCase
     private const CONTENT_TYPE = 'application/vnd.api+json';
 
     private EntityManagerInterface $em;
+
     private string $apiKey;
 
     protected function setUp(): void
@@ -27,21 +27,6 @@ class RepositoryControllerTest extends FeatureTestCase
         \assert($em instanceof EntityManagerInterface);
         $this->em = $em;
         $this->apiKey = $this->getApiKeyFromContainer();
-    }
-
-    /**
-     * Get the API key from the container's ApiKeyAuthenticator.
-     * This ensures tests use the same key the authenticator expects.
-     */
-    private function getApiKeyFromContainer(): string
-    {
-        $authenticator = self::getContainer()->get(ApiKeyAuthenticator::class);
-        \assert($authenticator instanceof ApiKeyAuthenticator);
-        $reflection = new \ReflectionClass($authenticator);
-        $property = $reflection->getProperty('apiKey');
-        $value = $property->getValue($authenticator);
-
-        return \is_string($value) ? $value : '';
     }
 
     // ==================== LIST Tests ====================
@@ -77,7 +62,9 @@ class RepositoryControllerTest extends FeatureTestCase
             '/api/v1/repository/notes',
             [],
             [],
-            array_merge($this->authHeaders(), ['HTTP_X-Project-ID' => '123'])
+            array_merge($this->authHeaders(), [
+                'HTTP_X-Project-ID' => '123',
+            ])
         );
 
         $this->assertResponseIsSuccessful();
@@ -96,7 +83,9 @@ class RepositoryControllerTest extends FeatureTestCase
             '/api/v1/repository/notes',
             [],
             [],
-            array_merge($this->authHeaders(), ['HTTP_X-Project-ID' => '100'])
+            array_merge($this->authHeaders(), [
+                'HTTP_X-Project-ID' => '100',
+            ])
         );
 
         $this->assertResponseIsSuccessful();
@@ -136,7 +125,9 @@ class RepositoryControllerTest extends FeatureTestCase
             '/api/v1/repository/notes',
             [],
             [],
-            ['HTTP_X-API-Key' => 'invalid-key']
+            [
+                'HTTP_X-API-Key' => 'invalid-key',
+            ]
         );
 
         $this->assertResponseStatusCodeSame(401);
@@ -160,7 +151,10 @@ class RepositoryControllerTest extends FeatureTestCase
             ]),
             $this->jsonEncode([
                 'name' => 'my-note',
-                'data' => ['title' => 'Test Note', 'content' => 'Hello World'],
+                'data' => [
+                    'title' => 'Test Note',
+                    'content' => 'Hello World',
+                ],
             ])
         );
 
@@ -188,7 +182,9 @@ class RepositoryControllerTest extends FeatureTestCase
             ]),
             $this->jsonEncode([
                 'name' => 'org-note',
-                'data' => ['title' => 'Org Note'],
+                'data' => [
+                    'title' => 'Org Note',
+                ],
             ])
         );
 
@@ -206,10 +202,14 @@ class RepositoryControllerTest extends FeatureTestCase
             '/api/v1/repository/notes',
             [],
             [],
-            array_merge($this->authHeaders(), ['CONTENT_TYPE' => 'application/json']),
+            array_merge($this->authHeaders(), [
+                'CONTENT_TYPE' => 'application/json',
+            ]),
             $this->jsonEncode([
                 'name' => 'branch-note',
-                'data' => ['title' => 'Branch Note'],
+                'data' => [
+                    'title' => 'Branch Note',
+                ],
                 'branch' => 'feature-x',
             ])
         );
@@ -226,8 +226,13 @@ class RepositoryControllerTest extends FeatureTestCase
             '/api/v1/repository/unknown',
             [],
             [],
-            array_merge($this->authHeaders(), ['CONTENT_TYPE' => 'application/json']),
-            $this->jsonEncode(['name' => 'test', 'data' => []])
+            array_merge($this->authHeaders(), [
+                'CONTENT_TYPE' => 'application/json',
+            ]),
+            $this->jsonEncode([
+                'name' => 'test',
+                'data' => [],
+            ])
         );
 
         $this->assertResponseStatusCodeSame(404);
@@ -242,10 +247,14 @@ class RepositoryControllerTest extends FeatureTestCase
             '/api/v1/repository/notes',
             [],
             [],
-            array_merge($this->authHeaders(), ['CONTENT_TYPE' => 'application/json']),
+            array_merge($this->authHeaders(), [
+                'CONTENT_TYPE' => 'application/json',
+            ]),
             $this->jsonEncode([
                 'name' => 'invalid-note',
-                'data' => ['content' => 'Missing required title'],
+                'data' => [
+                    'content' => 'Missing required title',
+                ],
             ])
         );
 
@@ -270,7 +279,9 @@ class RepositoryControllerTest extends FeatureTestCase
             ]),
             $this->jsonEncode([
                 'name' => 'duplicate-name',
-                'data' => ['title' => 'Another Note'],
+                'data' => [
+                    'title' => 'Another Note',
+                ],
             ])
         );
 
@@ -286,8 +297,15 @@ class RepositoryControllerTest extends FeatureTestCase
             '/api/v1/repository/notes',
             [],
             [],
-            ['CONTENT_TYPE' => 'application/json'],
-            $this->jsonEncode(['name' => 'test', 'data' => ['title' => 'Test']])
+            [
+                'CONTENT_TYPE' => 'application/json',
+            ],
+            $this->jsonEncode([
+                'name' => 'test',
+                'data' => [
+                    'title' => 'Test',
+                ],
+            ])
         );
 
         $this->assertResponseStatusCodeSame(401);
@@ -360,9 +378,13 @@ class RepositoryControllerTest extends FeatureTestCase
             '/api/v1/repository/notes/' . $metaObject->getUuid()->toString(),
             [],
             [],
-            array_merge($this->authHeaders(), ['CONTENT_TYPE' => 'application/json']),
+            array_merge($this->authHeaders(), [
+                'CONTENT_TYPE' => 'application/json',
+            ]),
             $this->jsonEncode([
-                'data' => ['content' => 'Updated Content'],
+                'data' => [
+                    'content' => 'Updated Content',
+                ],
             ])
         );
 
@@ -382,9 +404,13 @@ class RepositoryControllerTest extends FeatureTestCase
             '/api/v1/repository/notes/' . $metaObject->getUuid()->toString(),
             [],
             [],
-            array_merge($this->authHeaders(), ['CONTENT_TYPE' => 'application/json']),
+            array_merge($this->authHeaders(), [
+                'CONTENT_TYPE' => 'application/json',
+            ]),
             $this->jsonEncode([
-                'data' => ['content' => 'New content'],
+                'data' => [
+                    'content' => 'New content',
+                ],
             ])
         );
 
@@ -402,8 +428,14 @@ class RepositoryControllerTest extends FeatureTestCase
             '/api/v1/repository/notes/00000000-0000-0000-0000-000000000000',
             [],
             [],
-            array_merge($this->authHeaders(), ['CONTENT_TYPE' => 'application/json']),
-            $this->jsonEncode(['data' => ['title' => 'Test']])
+            array_merge($this->authHeaders(), [
+                'CONTENT_TYPE' => 'application/json',
+            ]),
+            $this->jsonEncode([
+                'data' => [
+                    'title' => 'Test',
+                ],
+            ])
         );
 
         $this->assertResponseStatusCodeSame(404);
@@ -423,9 +455,13 @@ class RepositoryControllerTest extends FeatureTestCase
             '/api/v1/repository/notes/' . $metaObject->getUuid()->toString(),
             [],
             [],
-            array_merge($this->authHeaders(), ['CONTENT_TYPE' => 'application/json']),
+            array_merge($this->authHeaders(), [
+                'CONTENT_TYPE' => 'application/json',
+            ]),
             $this->jsonEncode([
-                'data' => ['title' => null], // null will fail validation
+                'data' => [
+                    'title' => null,
+                ], // null will fail validation
             ])
         );
 
@@ -448,10 +484,14 @@ class RepositoryControllerTest extends FeatureTestCase
             '/api/v1/repository/notes/' . $metaObject->getUuid()->toString(),
             [],
             [],
-            array_merge($this->authHeaders(), ['CONTENT_TYPE' => 'application/json']),
+            array_merge($this->authHeaders(), [
+                'CONTENT_TYPE' => 'application/json',
+            ]),
             $this->jsonEncode([
                 'name' => 'updated-name',
-                'data' => ['title' => 'New Title'],
+                'data' => [
+                    'title' => 'New Title',
+                ],
             ])
         );
 
@@ -472,10 +512,14 @@ class RepositoryControllerTest extends FeatureTestCase
             '/api/v1/repository/notes/' . $metaObject->getUuid()->toString(),
             [],
             [],
-            array_merge($this->authHeaders(), ['CONTENT_TYPE' => 'application/json']),
+            array_merge($this->authHeaders(), [
+                'CONTENT_TYPE' => 'application/json',
+            ]),
             $this->jsonEncode([
                 'name' => 'new-name',
-                'data' => ['title' => 'Updated'],
+                'data' => [
+                    'title' => 'Updated',
+                ],
             ])
         );
 
@@ -493,8 +537,15 @@ class RepositoryControllerTest extends FeatureTestCase
             '/api/v1/repository/notes/00000000-0000-0000-0000-000000000000',
             [],
             [],
-            array_merge($this->authHeaders(), ['CONTENT_TYPE' => 'application/json']),
-            $this->jsonEncode(['name' => 'test', 'data' => ['title' => 'Test']])
+            array_merge($this->authHeaders(), [
+                'CONTENT_TYPE' => 'application/json',
+            ]),
+            $this->jsonEncode([
+                'name' => 'test',
+                'data' => [
+                    'title' => 'Test',
+                ],
+            ])
         );
 
         $this->assertResponseStatusCodeSame(404);
@@ -593,6 +644,21 @@ class RepositoryControllerTest extends FeatureTestCase
         $this->assertResponseStatusCodeSame(404);
     }
 
+    /**
+     * Get the API key from the container's ApiKeyAuthenticator.
+     * This ensures tests use the same key the authenticator expects.
+     */
+    private function getApiKeyFromContainer(): string
+    {
+        $authenticator = self::getContainer()->get(ApiKeyAuthenticator::class);
+        \assert($authenticator instanceof ApiKeyAuthenticator);
+        $reflection = new \ReflectionClass($authenticator);
+        $property = $reflection->getProperty('apiKey');
+        $value = $property->getValue($authenticator);
+
+        return \is_string($value) ? $value : '';
+    }
+
     // ==================== Helper Methods ====================
 
     /**
@@ -641,7 +707,10 @@ class RepositoryControllerTest extends FeatureTestCase
     private function createAndPersistMetaObject(
         string $name,
         ?int $projectId = 123,
-        array $data = ['title' => 'Test', 'content' => 'Sample'],
+        array $data = [
+            'title' => 'Test',
+            'content' => 'Sample',
+        ],
     ): MetaObject {
         $metaObject = MetaObjectFactory::create(
             data: $data,

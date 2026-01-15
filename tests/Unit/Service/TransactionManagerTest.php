@@ -12,6 +12,7 @@ use PHPUnit\Framework\TestCase;
 final class TransactionManagerTest extends TestCase
 {
     private EntityManagerInterface&MockObject $em;
+
     private TransactionManager $manager;
 
     protected function setUp(): void
@@ -80,9 +81,13 @@ final class TransactionManagerTest extends TestCase
 
     public function testTransactionalReturnsCallbackResult(): void
     {
-        $result = $this->manager->transactional(fn () => ['key' => 'value']);
+        $result = $this->manager->transactional(fn () => [
+            'key' => 'value',
+        ]);
 
-        $this->assertSame(['key' => 'value'], $result);
+        $this->assertSame([
+            'key' => 'value',
+        ], $result);
     }
 
     public function testTransactionalRollsBackOnException(): void

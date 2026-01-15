@@ -23,8 +23,12 @@ final class SchemaFactory
         $defaultSchema = [
             'type' => 'object',
             'properties' => [
-                'title' => ['type' => 'string'],
-                'content' => ['type' => 'string'],
+                'title' => [
+                    'type' => 'string',
+                ],
+                'content' => [
+                    'type' => 'string',
+                ],
             ],
             'required' => ['title'],
         ];
@@ -55,7 +59,11 @@ final class SchemaFactory
         $schema = [
             'type' => 'object',
             'properties' => array_merge(
-                ['title' => ['type' => 'string']],
+                [
+                    'title' => [
+                        'type' => 'string',
+                    ],
+                ],
                 $additionalProperties ?? []
             ),
             'required' => ['title'],
@@ -76,10 +84,16 @@ final class SchemaFactory
         string $version = '1.0.0',
         bool $isDefault = true,
     ): Schema {
-        $properties = ['title' => ['type' => 'string']];
+        $properties = [
+            'title' => [
+                'type' => 'string',
+            ],
+        ];
 
         foreach ($filterableFields as $fieldName => $fieldDef) {
-            $properties[$fieldName] = array_merge($fieldDef, ['x-filterable' => true]);
+            $properties[$fieldName] = array_merge($fieldDef, [
+                'x-filterable' => true,
+            ]);
         }
 
         $schema = [
@@ -101,7 +115,9 @@ final class SchemaFactory
         $schema = [
             'type' => 'object',
             'properties' => [
-                'name' => ['type' => 'string'],
+                'name' => [
+                    'type' => 'string',
+                ],
             ],
         ];
 

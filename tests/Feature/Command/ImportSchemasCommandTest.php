@@ -14,8 +14,11 @@ use Symfony\Component\Filesystem\Filesystem;
 class ImportSchemasCommandTest extends FeatureTestCase
 {
     private CommandTester $commandTester;
+
     private string $tempDir;
+
     private Filesystem $filesystem;
+
     private EntityManagerInterface $em;
 
     protected function setUp(): void
@@ -50,7 +53,11 @@ class ImportSchemasCommandTest extends FeatureTestCase
     {
         $this->createSchemaFile('notes', [
             'type' => 'object',
-            'properties' => ['title' => ['type' => 'string']],
+            'properties' => [
+                'title' => [
+                    'type' => 'string',
+                ],
+            ],
             'required' => ['title'],
             'description' => 'Notes schema',
         ]);
@@ -64,15 +71,23 @@ class ImportSchemasCommandTest extends FeatureTestCase
         $this->assertStringContainsString('Imported new schema: notes', $this->commandTester->getDisplay());
 
         // Verify schema was created in DB
-        $schema = $this->em->getRepository(Schema::class)->findOneBy(['objectType' => 'notes']);
+        $schema = $this->em->getRepository(Schema::class)->findOneBy([
+            'objectType' => 'notes',
+        ]);
         $this->assertNotNull($schema);
         $this->assertSame('Notes schema', $schema->getDescription());
     }
 
     public function testImportMultipleSchemas(): void
     {
-        $this->createSchemaFile('notes', ['type' => 'object', 'properties' => []]);
-        $this->createSchemaFile('articles', ['type' => 'object', 'properties' => []]);
+        $this->createSchemaFile('notes', [
+            'type' => 'object',
+            'properties' => [],
+        ]);
+        $this->createSchemaFile('articles', [
+            'type' => 'object',
+            'properties' => [],
+        ]);
 
         $this->commandTester->execute([
             '--directory' => $this->tempDir,
@@ -86,7 +101,10 @@ class ImportSchemasCommandTest extends FeatureTestCase
 
     public function testImportWithCustomVersion(): void
     {
-        $this->createSchemaFile('versioned', ['type' => 'object', 'properties' => []]);
+        $this->createSchemaFile('versioned', [
+            'type' => 'object',
+            'properties' => [],
+        ]);
 
         $this->commandTester->execute([
             '--directory' => $this->tempDir,
@@ -95,14 +113,19 @@ class ImportSchemasCommandTest extends FeatureTestCase
 
         $this->assertSame(0, $this->commandTester->getStatusCode());
 
-        $schema = $this->em->getRepository(Schema::class)->findOneBy(['objectType' => 'versioned']);
+        $schema = $this->em->getRepository(Schema::class)->findOneBy([
+            'objectType' => 'versioned',
+        ]);
         $this->assertNotNull($schema);
         $this->assertSame('2.5.0', $schema->getVersion());
     }
 
     public function testImportWithDryRun(): void
     {
-        $this->createSchemaFile('dry-run-test', ['type' => 'object', 'properties' => []]);
+        $this->createSchemaFile('dry-run-test', [
+            'type' => 'object',
+            'properties' => [],
+        ]);
 
         $this->commandTester->execute([
             '--directory' => $this->tempDir,
@@ -114,19 +137,28 @@ class ImportSchemasCommandTest extends FeatureTestCase
         $this->assertStringContainsString('This was a dry run. No changes were made.', $this->commandTester->getDisplay());
 
         // Verify nothing was created
-        $schema = $this->em->getRepository(Schema::class)->findOneBy(['objectType' => 'dry-run-test']);
+        $schema = $this->em->getRepository(Schema::class)->findOneBy([
+            'objectType' => 'dry-run-test',
+        ]);
         $this->assertNull($schema);
     }
 
     public function testImportSkipsExistingSchemas(): void
     {
         // Create existing schema
-        $existingSchema = new Schema('existing', '1.0.0', ['type' => 'object']);
+        $existingSchema = new Schema('existing', '1.0.0', [
+            'type' => 'object',
+        ]);
         $existingSchema->setIsDefault(true);
         $this->em->persist($existingSchema);
         $this->em->flush();
 
-        $this->createSchemaFile('existing', ['type' => 'object', 'properties' => ['new' => []]]);
+        $this->createSchemaFile('existing', [
+            'type' => 'object',
+            'properties' => [
+                'new' => [],
+            ],
+        ]);
 
         $this->commandTester->execute([
             '--directory' => $this->tempDir,
@@ -140,12 +172,22 @@ class ImportSchemasCommandTest extends FeatureTestCase
     public function testImportOverwritesWithForce(): void
     {
         // Create existing schema
-        $existingSchema = new Schema('force-test', '1.0.0', ['type' => 'object', 'old' => true]);
+        $existingSchema = new Schema('force-test', '1.0.0', [
+            'type' => 'object',
+            'old' => true,
+        ]);
         $existingSchema->setIsDefault(true);
         $this->em->persist($existingSchema);
         $this->em->flush();
 
-        $this->createSchemaFile('force-test', ['type' => 'object', 'properties' => ['new' => ['type' => 'string']]]);
+        $this->createSchemaFile('force-test', [
+            'type' => 'object',
+            'properties' => [
+                'new' => [
+                    'type' => 'string',
+                ],
+            ],
+        ]);
 
         $this->commandTester->execute([
             '--directory' => $this->tempDir,
@@ -191,13 +233,18 @@ class ImportSchemasCommandTest extends FeatureTestCase
 
     public function testImportSetsDefaultFlag(): void
     {
-        $this->createSchemaFile('default-test', ['type' => 'object', 'properties' => []]);
+        $this->createSchemaFile('default-test', [
+            'type' => 'object',
+            'properties' => [],
+        ]);
 
         $this->commandTester->execute([
             '--directory' => $this->tempDir,
         ]);
 
-        $schema = $this->em->getRepository(Schema::class)->findOneBy(['objectType' => 'default-test']);
+        $schema = $this->em->getRepository(Schema::class)->findOneBy([
+            'objectType' => 'default-test',
+        ]);
         $this->assertTrue($schema->isDefault());
     }
 
@@ -213,7 +260,9 @@ class ImportSchemasCommandTest extends FeatureTestCase
             '--directory' => $this->tempDir,
         ]);
 
-        $schema = $this->em->getRepository(Schema::class)->findOneBy(['objectType' => 'title-desc']);
+        $schema = $this->em->getRepository(Schema::class)->findOneBy([
+            'objectType' => 'title-desc',
+        ]);
         $this->assertSame('My Title Description', $schema->getDescription());
     }
 

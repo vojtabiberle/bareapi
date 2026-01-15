@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 final class JsonApiSerializerTest extends TestCase
 {
     private RequestStack&MockObject $requestStack;
+
     private JsonApiSerializer $serializer;
 
     protected function setUp(): void
@@ -209,7 +210,10 @@ final class JsonApiSerializerTest extends TestCase
     public function testSuccessIncludesDataAttribute(): void
     {
         $this->requestStack->method('getCurrentRequest')->willReturn(null);
-        $responseData = ['title' => 'Test Note', 'content' => 'Hello World'];
+        $responseData = [
+            'title' => 'Test Note',
+            'content' => 'Hello World',
+        ];
         $response = $this->createTestResponse(data: $responseData);
 
         $result = $this->serializer->success($response);
@@ -229,7 +233,9 @@ final class JsonApiSerializerTest extends TestCase
         ?int $projectId = 123,
         string $organizationId = 'org-123',
         int $revision = 1,
-        array $data = ['title' => 'Test'],
+        array $data = [
+            'title' => 'Test',
+        ],
         ?DateTimeImmutable $lastUpdated = null,
         ?DateTimeImmutable $createdAt = null,
         ?DateTimeImmutable $revisionCreatedAt = null,
