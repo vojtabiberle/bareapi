@@ -5,115 +5,356 @@ declare(strict_types=1);
 namespace Bareapi\Repository;
 
 use Bareapi\Entity\MetaObject;
+use Bareapi\Entity\MetaObjectRevision;
 use Bareapi\Exception\InvalidFilterException;
 use Bareapi\Service\SchemaServiceInterface;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\QueryBuilder;
+use Doctrine\ORM\EntityRepository;
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\UuidInterface;
 
-class MetaObjectRepository
+class MetaObjectRepository implements MetaObjectRepositoryInterface
 {
-    private EntityManagerInterface $em;
+    /**
+     * @var EntityRepository<MetaObject>
+     */
+    private EntityRepository $repository;
 
     /**
-     * @var class-string<MetaObject>
+     * @var EntityRepository<MetaObjectRevision>
      */
-    private string $entityClass;
+    private EntityRepository $revisionRepository;
 
-    private SchemaServiceInterface $schemaService;
-
-    public function __construct(EntityManagerInterface $em, SchemaServiceInterface $schemaService)
-    {
-        $this->em = $em;
-        $this->entityClass = MetaObject::class;
-        $this->schemaService = $schemaService;
+    public function __construct(
+        private EntityManagerInterface $em,
+        private SchemaServiceInterface $schemaService,
+    ) {
+        $this->repository = $em->getRepository(MetaObject::class);
+        $this->revisionRepository = $em->getRepository(MetaObjectRevision::class);
     }
 
-    public function find(string $id): ?MetaObject
+    public function findByUuid(UuidInterface $uuid): ?MetaObject
     {
-        $obj = $this->em->find($this->entityClass, $id);
-        return $obj instanceof MetaObject ? $obj : null;
+        return $this->repository->findOneBy([
+            'uuid' => $uuid,
+        ]);
     }
 
-    /**
-     * @return MetaObject[]
-     */
-    public function findAllByType(string $type): array
+    public function findByUuidString(string $uuid): ?MetaObject
     {
-        $result = $this->createTypeQueryBuilder($type)
-            ->getQuery()
-            ->getResult();
-        return array_values(array_filter(
-            is_array($result) ? $result : [],
-            fn ($item) => $item instanceof \Bareapi\Entity\MetaObject
-        ));
+        try {
+            $uuidObject = Uuid::fromString($uuid);
+
+            return $this->findByUuid($uuidObject);
+        } catch (\Exception) {
+            return null;
+        }
     }
 
     /**
      * @param array<string, mixed> $filters
      * @return MetaObject[]
      */
-    public function findByTypeAndFilters(string $type, array $filters): array
-    {
-        $filterableFields = $this->schemaService->getFilterableFields($type);
-
-        $sql = 'SELECT * FROM meta_objects WHERE type = :type';
-        $params = [
-            'type' => $type,
-        ];
-        $types = [
-            'type' => \PDO::PARAM_STR,
-        ];
-
-        foreach ($filters as $key => $value) {
+    public function findByType(
+        string $objectType,
+        ?int $projectId,
+        string $organizationId,
+        string $branch = 'main',
+        array $filters = [],
+        int $limit = 100,
+        int $offset = 0,
+        bool $includeDeleted = false,
+    ): array {
+        // Validate filters against schema
+        $filterableFields = $this->schemaService->getFilterableFields($objectType);
+        foreach (array_keys($filters) as $key) {
             if (! in_array($key, $filterableFields, true)) {
-                throw new InvalidFilterException($key, $type);
+                throw new InvalidFilterException((string) $key, $objectType);
             }
-            $paramName = 'filter_' . $key;
-            $sql .= " AND data->>'{$key}' = :{$paramName}";
-            $params[$paramName] = is_scalar($value) ? (string) $value : '';
-        }
-
-        // Remove duplicate AND if present
-        $sql = preg_replace('/( AND )+/', ' AND ', $sql);
-        if (! is_string($sql)) {
-            throw new \RuntimeException('SQL must be a string');
         }
 
         $conn = $this->em->getConnection();
-        $stmt = $conn->prepare($sql);
 
-        // Bind parameters
-        foreach ($params as $name => $val) {
-            $stmt->bindValue($name, $val);
+        $sql = 'SELECT m.uuid FROM meta_objects m ';
+        $sql .= 'LEFT JOIN meta_object_revisions r ON m.uuid = r.uuid AND r.deleted_at IS NULL ';
+        $sql .= 'WHERE m.object_type = :objectType ';
+        $sql .= 'AND m.organization_id = :organizationId ';
+        $sql .= 'AND m.branch = :branch ';
+
+        if ($projectId !== null) {
+            $sql .= 'AND m.project_id = :projectId ';
+        } else {
+            $sql .= 'AND m.project_id IS NULL ';
         }
 
-        $result = $stmt->executeQuery()->fetchAllAssociative();
+        if (! $includeDeleted) {
+            $sql .= 'AND m.deleted_at IS NULL ';
+        }
 
-        // Hydrate MetaObject entities, skip nulls
-        return array_values(array_filter(array_map(function ($row) {
-            $entity = $this->em->getRepository(MetaObject::class)->find($row['id']);
-            return $entity instanceof MetaObject ? $entity : null;
-        }, $result)));
+        // Add JSONB filters
+        $paramIndex = 0;
+        foreach ($filters as $key => $value) {
+            $paramName = 'filter_' . $paramIndex;
+            $sql .= "AND r.data->>'{$key}' = :{$paramName} ";
+            $paramIndex++;
+        }
+
+        $sql .= 'GROUP BY m.uuid ';
+        $sql .= 'ORDER BY m.last_updated DESC ';
+        $sql .= 'LIMIT :limit OFFSET :offset';
+
+        $params = [
+            'objectType' => $objectType,
+            'organizationId' => $organizationId,
+            'branch' => $branch,
+            'limit' => $limit,
+            'offset' => $offset,
+        ];
+
+        if ($projectId !== null) {
+            $params['projectId'] = $projectId;
+        }
+
+        $paramIndex = 0;
+        foreach ($filters as $value) {
+            $params['filter_' . $paramIndex] = is_scalar($value) ? (string) $value : '';
+            $paramIndex++;
+        }
+
+        $stmt = $conn->prepare($sql);
+        $result = $stmt->executeQuery($params)->fetchAllAssociative();
+
+        $metaObjects = [];
+        foreach ($result as $row) {
+            if (isset($row['uuid']) && is_string($row['uuid'])) {
+                $entity = $this->findByUuidString($row['uuid']);
+                if ($entity !== null) {
+                    $metaObjects[] = $entity;
+                }
+            }
+        }
+
+        return $metaObjects;
     }
 
-    public function save(MetaObject $obj): void
+    public function findByNameAndScope(
+        string $objectType,
+        string $name,
+        string $branch,
+        ?int $projectId,
+        string $organizationId,
+    ): ?MetaObject {
+        $criteria = [
+            'objectType' => $objectType,
+            'name' => $name,
+            'branch' => $branch,
+            'organizationId' => $organizationId,
+        ];
+
+        if ($projectId !== null) {
+            $criteria['projectId'] = $projectId;
+        }
+
+        return $this->repository->findOneBy($criteria);
+    }
+
+    public function findRevision(UuidInterface $uuid, int $revisionNumber): ?MetaObjectRevision
     {
-        $this->em->persist($obj);
+        $metaObject = $this->findByUuid($uuid);
+        if ($metaObject === null) {
+            return null;
+        }
+
+        return $this->revisionRepository->findOneBy([
+            'metaObject' => $metaObject,
+            'revision' => $revisionNumber,
+        ]);
+    }
+
+    /**
+     * @return MetaObjectRevision[]
+     */
+    public function findRevisions(
+        UuidInterface $uuid,
+        bool $includeDeleted = false,
+    ): array {
+        $metaObject = $this->findByUuid($uuid);
+        if ($metaObject === null) {
+            return [];
+        }
+
+        $criteria = [
+            'metaObject' => $metaObject,
+        ];
+
+        $revisions = $this->revisionRepository->findBy(
+            $criteria,
+            [
+                'revision' => 'DESC',
+            ]
+        );
+
+        if (! $includeDeleted) {
+            $revisions = array_filter(
+                $revisions,
+                fn (MetaObjectRevision $r) => $r->getDeletedAt() === null
+            );
+        }
+
+        return array_values($revisions);
+    }
+
+    /**
+     * @return MetaObjectRevision[]
+     */
+    public function findRevisionsByType(
+        string $objectType,
+        ?int $projectId,
+        string $organizationId,
+        string $branch = 'main',
+        int $limit = 100,
+        int $offset = 0,
+    ): array {
+        $conn = $this->em->getConnection();
+
+        $sql = 'SELECT r.id FROM meta_object_revisions r ';
+        $sql .= 'JOIN meta_objects m ON r.uuid = m.uuid ';
+        $sql .= 'WHERE m.object_type = :objectType ';
+        $sql .= 'AND m.organization_id = :organizationId ';
+        $sql .= 'AND m.branch = :branch ';
+        $sql .= 'AND r.deleted_at IS NULL ';
+        $sql .= 'AND m.deleted_at IS NULL ';
+
+        if ($projectId !== null) {
+            $sql .= 'AND m.project_id = :projectId ';
+        } else {
+            $sql .= 'AND m.project_id IS NULL ';
+        }
+
+        $sql .= 'ORDER BY r.created_at DESC ';
+        $sql .= 'LIMIT :limit OFFSET :offset';
+
+        $params = [
+            'objectType' => $objectType,
+            'organizationId' => $organizationId,
+            'branch' => $branch,
+            'limit' => $limit,
+            'offset' => $offset,
+        ];
+
+        if ($projectId !== null) {
+            $params['projectId'] = $projectId;
+        }
+
+        $stmt = $conn->prepare($sql);
+        $result = $stmt->executeQuery($params)->fetchAllAssociative();
+
+        $revisions = [];
+        foreach ($result as $row) {
+            if (isset($row['id']) && is_numeric($row['id'])) {
+                $revision = $this->revisionRepository->find((int) $row['id']);
+                if ($revision !== null) {
+                    $revisions[] = $revision;
+                }
+            }
+        }
+
+        return $revisions;
+    }
+
+    public function save(MetaObject $metaObject): void
+    {
+        $this->em->persist($metaObject);
         $this->em->flush();
     }
 
-    public function delete(MetaObject $obj): void
+    public function saveRevision(MetaObjectRevision $revision): void
     {
-        $this->em->remove($obj);
+        $this->em->persist($revision);
         $this->em->flush();
     }
 
-    private function createTypeQueryBuilder(string $type): QueryBuilder
+    public function softDelete(MetaObject $metaObject): void
     {
-        $qb = $this->em->createQueryBuilder();
-        return $qb->select('m')
-            ->from($this->entityClass, 'm')
-            ->where('m.type = :type')
-            ->setParameter('type', $type);
+        $metaObject->setDeletedAt(new DateTimeImmutable());
+        $this->em->flush();
+    }
+
+    public function softDeleteRevision(MetaObjectRevision $revision): void
+    {
+        $revision->setDeletedAt(new DateTimeImmutable());
+        $this->em->flush();
+    }
+
+    public function remove(MetaObject $metaObject): void
+    {
+        $this->em->remove($metaObject);
+        $this->em->flush();
+    }
+
+    /**
+     * @param array<string, mixed> $filters
+     */
+    public function count(
+        string $objectType,
+        ?int $projectId,
+        string $organizationId,
+        string $branch = 'main',
+        array $filters = [],
+        bool $includeDeleted = false,
+    ): int {
+        $filterableFields = $this->schemaService->getFilterableFields($objectType);
+        foreach (array_keys($filters) as $key) {
+            if (! in_array($key, $filterableFields, true)) {
+                throw new InvalidFilterException((string) $key, $objectType);
+            }
+        }
+
+        $conn = $this->em->getConnection();
+
+        $sql = 'SELECT COUNT(DISTINCT m.uuid) as cnt FROM meta_objects m ';
+        $sql .= 'LEFT JOIN meta_object_revisions r ON m.uuid = r.uuid AND r.deleted_at IS NULL ';
+        $sql .= 'WHERE m.object_type = :objectType ';
+        $sql .= 'AND m.organization_id = :organizationId ';
+        $sql .= 'AND m.branch = :branch ';
+
+        if ($projectId !== null) {
+            $sql .= 'AND m.project_id = :projectId ';
+        } else {
+            $sql .= 'AND m.project_id IS NULL ';
+        }
+
+        if (! $includeDeleted) {
+            $sql .= 'AND m.deleted_at IS NULL ';
+        }
+
+        $paramIndex = 0;
+        foreach ($filters as $key => $value) {
+            $paramName = 'filter_' . $paramIndex;
+            $sql .= "AND r.data->>'{$key}' = :{$paramName} ";
+            $paramIndex++;
+        }
+
+        $params = [
+            'objectType' => $objectType,
+            'organizationId' => $organizationId,
+            'branch' => $branch,
+        ];
+
+        if ($projectId !== null) {
+            $params['projectId'] = $projectId;
+        }
+
+        $paramIndex = 0;
+        foreach ($filters as $value) {
+            $params['filter_' . $paramIndex] = is_scalar($value) ? (string) $value : '';
+            $paramIndex++;
+        }
+
+        $stmt = $conn->prepare($sql);
+        $result = $stmt->executeQuery($params)->fetchAssociative();
+
+        return isset($result['cnt']) && is_numeric($result['cnt']) ? (int) $result['cnt'] : 0;
     }
 }

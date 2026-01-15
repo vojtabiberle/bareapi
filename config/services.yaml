@@ -22,6 +22,9 @@ services:
     Bareapi\Repository\SchemaRepositoryInterface:
         class: Bareapi\Repository\SchemaRepository
 
+    Bareapi\Repository\MetaObjectRepositoryInterface:
+        class: Bareapi\Repository\MetaObjectRepository
+
     # Service interfaces
     Bareapi\Service\SchemaServiceInterface:
         class: Bareapi\Service\SchemaService
