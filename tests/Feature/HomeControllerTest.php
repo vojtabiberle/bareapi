@@ -10,6 +10,6 @@ class HomeControllerTest extends FeatureTestCase
     {
         $this->client->request('GET', '/');
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('h1', 'BareAPI');
+        $this->assertSelectorTextContains('h1', 'Metastore API');
     }
 }
