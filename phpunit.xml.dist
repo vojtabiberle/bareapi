@@ -18,5 +18,6 @@
         <env name="APP_DEBUG" value="1"/>
         <env name="KERNEL_CLASS" value="Bareapi\Kernel"/>
         <env name="SYMFONY_DEPRECATIONS_HELPER" value="weak"/>
+        <env name="API_KEY" value="test-api-key-for-ci"/>
     </php>
 </phpunit>
