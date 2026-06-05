@@ -30,7 +30,20 @@ class HomeController
         }
         $html .= '</ul>';
 
-        $html .= '<h2>Generic CRUD Endpoints</h2><ul>';
+        $html .= '<h2>Repository API</h2><ul>';
+        $html .= '<li>GET    /api/v1/repository/{objectType}</li>';
+        $html .= '<li>POST   /api/v1/repository/{objectType}</li>';
+        $html .= '<li>GET    /api/v1/repository/{objectType}/{id}</li>';
+        $html .= '<li>PATCH  /api/v1/repository/{objectType}/{id}</li>';
+        $html .= '<li>PUT    /api/v1/repository/{objectType}/{id}</li>';
+        $html .= '<li>DELETE /api/v1/repository/{objectType}/{id}</li>';
+        $html .= '<li>GET    /api/v1/schema/{objectType}</li>';
+        $html .= '<li>GET    /api/v1/schema/{objectType}/{version}</li>';
+        $html .= '<li>GET    /health-check</li>';
+        $html .= '<li>GET    /api/v1/documentation/openapi.json</li>';
+        $html .= '</ul>';
+
+        $html .= '<h2>Legacy CRUD Endpoints</h2><ul>';
         $html .= '<li>GET    /api/{type}</li>';
         $html .= '<li>POST   /api/{type}</li>';
         $html .= '<li>GET    /api/{type}/{id}</li>';
