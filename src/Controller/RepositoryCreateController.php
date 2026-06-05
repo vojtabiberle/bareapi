@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Bareapi\Controller;
 
 use Bareapi\Entity\MetaObject;
+use Bareapi\Exception\ReferenceValidationException;
 use Bareapi\Repository\MetaObjectRepository;
 use Bareapi\Repository\MetaObjectRevisionRepository;
 use Bareapi\Service\AuthorizationService;
 use Bareapi\Service\JsonApiResponseFactory;
+use Bareapi\Service\ReferenceIntegrityService;
 use Bareapi\Service\SchemaValidatorService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,6 +22,7 @@ final class RepositoryCreateController
         private MetaObjectRepository $repository,
         private MetaObjectRevisionRepository $revisionRepository,
         private AuthorizationService $authorizationService,
+        private ReferenceIntegrityService $referenceIntegrityService,
         private SchemaValidatorService $schemaValidator,
         private JsonApiResponseFactory $responseFactory,
     ) {
@@ -68,8 +71,25 @@ final class RepositoryCreateController
             : 'main';
 
         $object = new MetaObject($objectType, $schemaVersion, ControllerUtil::toStringKeyedArray($validated), $name, $branch);
+        try {
+            $this->referenceIntegrityService->replaceReferencesForObject(
+                $objectType,
+                $object->getId()->toString(),
+                ControllerUtil::toStringKeyedArray($validated)
+            );
+        } catch (ReferenceValidationException $e) {
+            return new JsonResponse([
+                'error' => $e->getMessage(),
+            ], 422);
+        }
+
         $this->repository->save($object);
         $revision = $this->revisionRepository->createInitial($object, ControllerUtil::toStringKeyedArray($validated));
+        $this->referenceIntegrityService->replaceReferencesForObject(
+            $objectType,
+            $object->getId()->toString(),
+            ControllerUtil::toStringKeyedArray($validated)
+        );
 
         return $this->responseFactory->created(
             $object,

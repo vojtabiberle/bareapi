@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Bareapi\Controller;
 
 use Bareapi\Entity\MetaObject;
+use Bareapi\Exception\ReferenceDeleteRestrictedException;
+use Bareapi\Exception\ReferenceValidationException;
 use Bareapi\Repository\MetaObjectRepository;
 use Bareapi\Repository\MetaObjectRevisionRepository;
 use Bareapi\Service\AuthorizationService;
 use Bareapi\Service\JsonApiResponseFactory;
+use Bareapi\Service\ReferenceIntegrityService;
 use Bareapi\Service\SchemaValidatorService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,6 +23,7 @@ final class RepositoryObjectController
         private MetaObjectRepository $repository,
         private MetaObjectRevisionRepository $revisionRepository,
         private AuthorizationService $authorizationService,
+        private ReferenceIntegrityService $referenceIntegrityService,
         private SchemaValidatorService $schemaValidator,
         private JsonApiResponseFactory $responseFactory,
     ) {
@@ -145,8 +149,15 @@ final class RepositoryObjectController
             return $denied;
         }
 
-        $this->repository->delete($object);
+        try {
+            $this->referenceIntegrityService->applyDeleteRules($object);
+        } catch (ReferenceDeleteRestrictedException $e) {
+            return new JsonResponse([
+                'error' => $e->getMessage(),
+            ], 409);
+        }
 
+        $this->repository->delete($object);
         return $this->responseFactory->noContent();
     }
 
@@ -192,6 +203,14 @@ final class RepositoryObjectController
         }
 
         $attributes = ControllerUtil::toStringKeyedArray($validated);
+        try {
+            $this->referenceIntegrityService->replaceReferencesForObject($objectType, $object->getId()->toString(), $attributes);
+        } catch (ReferenceValidationException $e) {
+            return new JsonResponse([
+                'error' => $e->getMessage(),
+            ], 422);
+        }
+
         $object->setData($attributes);
         $object->setUpdatedAt(new \DateTimeImmutable());
         $this->repository->save($object);
