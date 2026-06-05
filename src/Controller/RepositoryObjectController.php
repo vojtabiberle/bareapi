@@ -115,7 +115,11 @@ final class RepositoryObjectController
             return $denied;
         }
 
-        $payload = $this->requestPayload($request);
+        try {
+            $payload = $this->requestPayload($request);
+        } catch (\JsonException) {
+            return $this->invalidJsonResponse();
+        }
         $patchData = isset($payload['data']) && is_array($payload['data'])
             ? ControllerUtil::toStringKeyedArray($payload['data'])
             : [];
@@ -139,7 +143,11 @@ final class RepositoryObjectController
             return $denied;
         }
 
-        $payload = $this->requestPayload($request);
+        try {
+            $payload = $this->requestPayload($request);
+        } catch (\JsonException) {
+            return $this->invalidJsonResponse();
+        }
         $replacement = isset($payload['data']) && is_array($payload['data'])
             ? ControllerUtil::toStringKeyedArray($payload['data'])
             : [];
@@ -195,9 +203,21 @@ final class RepositoryObjectController
      */
     private function requestPayload(Request $request): array
     {
-        $decoded = json_decode($request->getContent(), true);
+        $content = $request->getContent();
+        if (trim($content) === '') {
+            return [];
+        }
+
+        $decoded = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
 
         return ControllerUtil::toStringKeyedArray($decoded);
+    }
+
+    private function invalidJsonResponse(): JsonResponse
+    {
+        return new JsonResponse([
+            'error' => 'Invalid JSON request body',
+        ], 400);
     }
 
     /**

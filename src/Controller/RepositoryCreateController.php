@@ -45,8 +45,11 @@ final class RepositoryCreateController
             return $denied;
         }
 
-        $payloadRaw = json_decode($request->getContent(), true);
-        $payload = is_array($payloadRaw) ? ControllerUtil::toStringKeyedArray($payloadRaw) : [];
+        try {
+            $payload = $this->requestPayload($request);
+        } catch (\JsonException) {
+            return $this->invalidJsonResponse();
+        }
         $data = isset($payload['data']) && is_array($payload['data'])
             ? ControllerUtil::toStringKeyedArray($payload['data'])
             : [];
@@ -99,5 +102,27 @@ final class RepositoryCreateController
             $revision->getCreatedAt(),
             ControllerUtil::toStringKeyedArray($validated)
         );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function requestPayload(Request $request): array
+    {
+        $content = $request->getContent();
+        if (trim($content) === '') {
+            return [];
+        }
+
+        $decoded = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+
+        return ControllerUtil::toStringKeyedArray($decoded);
+    }
+
+    private function invalidJsonResponse(): JsonResponse
+    {
+        return new JsonResponse([
+            'error' => 'Invalid JSON request body',
+        ], 400);
     }
 }

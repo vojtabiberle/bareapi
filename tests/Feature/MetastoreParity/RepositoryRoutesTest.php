@@ -71,6 +71,53 @@ final class RepositoryRoutesTest extends FeatureTestCase
         $this->assertResponseStatusCodeSame(404);
     }
 
+    public function testRepositoryCreateRejectsMalformedJson(): void
+    {
+        $this->requestMalformedJson('POST', '/api/v1/repository/notes');
+
+        $this->assertResponseStatusCodeSame(400);
+    }
+
+    public function testRepositoryPatchRejectsMalformedJson(): void
+    {
+        $created = $this->requestJsonApi(
+            'POST',
+            '/api/v1/repository/notes',
+            [
+                'name' => 'Patch Invalid JSON',
+                'data' => [
+                    'title' => 'Initial',
+                    'content' => 'Initial content',
+                ],
+            ],
+            201
+        );
+
+        $this->requestMalformedJson('PATCH', '/api/v1/repository/notes/' . $this->jsonApiId($created));
+
+        $this->assertResponseStatusCodeSame(400);
+    }
+
+    public function testRepositoryPutRejectsMalformedJson(): void
+    {
+        $created = $this->requestJsonApi(
+            'POST',
+            '/api/v1/repository/notes',
+            [
+                'name' => 'Put Invalid JSON',
+                'data' => [
+                    'title' => 'Initial',
+                    'content' => 'Initial content',
+                ],
+            ],
+            201
+        );
+
+        $this->requestMalformedJson('PUT', '/api/v1/repository/notes/' . $this->jsonApiId($created));
+
+        $this->assertResponseStatusCodeSame(400);
+    }
+
     /**
      * @param array<string, mixed>|null $payload
      * @return array<string, mixed>
@@ -94,6 +141,20 @@ final class RepositoryRoutesTest extends FeatureTestCase
         $this->assertIsArray($response);
 
         return $this->stringKeyedArray($response);
+    }
+
+    private function requestMalformedJson(string $method, string $path): void
+    {
+        $this->client->request(
+            $method,
+            $path,
+            [],
+            [],
+            [
+                'CONTENT_TYPE' => 'application/json',
+            ],
+            '{"data":'
+        );
     }
 
     /**
