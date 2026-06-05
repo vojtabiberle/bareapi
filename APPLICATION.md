@@ -1,6 +1,10 @@
 # BareAPI
 
-BareAPI is a Symfony-based backend that automatically exposes dynamic CRUD endpoints for arbitrary object types defined by JSON Schema files (located in `config/schemas/`). Rather than manually creating Doctrine entities, repositories, and controllers for each type, BareAPI leverages a single generic entity and runtime schema validation to handle all types uniformly and efficiently.
+BareAPI is a Symfony-based semantic and versioned document store. It exposes product-neutral repository endpoints under `/api/v1`, with database-backed schemas, object metadata, immutable revisions, JSON:API-style responses, schema-driven filters, optional generic authorization, soft deletes, and generic reference integrity.
+
+The original schema-driven CRUD endpoints under `/api/{type}` remain available for compatibility. New integrations should use `/api/v1/repository/{objectType}` and `/api/v1/schema/{objectType}`.
+
+No Organization, Project, or admin-specific concepts are part of this implementation.
 
 ## Key Concepts
 
