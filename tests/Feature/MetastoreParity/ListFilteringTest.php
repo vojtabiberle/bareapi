@@ -6,6 +6,7 @@ namespace Bareapi\Tests\Feature\MetastoreParity;
 
 use Bareapi\Repository\SchemaRepository;
 use Bareapi\Tests\Feature\FeatureTestCase;
+use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\NullOutput;
@@ -63,6 +64,24 @@ final class ListFilteringTest extends FeatureTestCase
         $this->assertResponseStatusCodeSame(400);
     }
 
+    public function testListsRepositoryObjectsByNeutralObjectTypeColumn(): void
+    {
+        $this->insertLegacyTypedTag();
+
+        $listed = $this->listTags('');
+
+        $this->assertSame(['Legacy typed tag'], $this->names($listed));
+    }
+
+    public function testListsRepositoryRevisionsByNeutralObjectTypeColumn(): void
+    {
+        $this->insertLegacyTypedTag();
+
+        $listed = $this->listTagRevisions();
+
+        $this->assertSame(['Legacy typed tag'], $this->names($listed));
+    }
+
     private function createTag(string $name, string $color, string $creatorName): void
     {
         $this->client->request(
@@ -108,6 +127,62 @@ final class ListFilteringTest extends FeatureTestCase
             fn (array $item): array => $this->stringKeyedArray($item),
             array_filter($response['data'], static fn (mixed $item): bool => is_array($item))
         ));
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function listTagRevisions(): array
+    {
+        $this->client->request('GET', '/api/v1/repository/tags/revisions');
+        $this->assertResponseStatusCodeSame(200);
+
+        $content = $this->client->getResponse()->getContent();
+        $response = json_decode(is_string($content) ? $content : '', true, 512, JSON_THROW_ON_ERROR);
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('data', $response);
+        $this->assertIsArray($response['data']);
+
+        return array_values(array_map(
+            fn (array $item): array => $this->stringKeyedArray($item),
+            array_filter($response['data'], static fn (mixed $item): bool => is_array($item))
+        ));
+    }
+
+    private function insertLegacyTypedTag(): void
+    {
+        $connection = self::getContainer()->get(Connection::class);
+        $this->assertInstanceOf(Connection::class, $connection);
+        $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+        $id = '018ff3ae-c558-7ed8-8f68-0242ac1200bb';
+        $data = [
+            'id' => '018ff3ae-c558-7ed8-8f68-0242ac1200bc',
+            'name' => 'legacy-typed-tag',
+            'color' => 'red',
+            'creator' => [
+                'id' => '018ff3ae-c558-7ed8-8f68-0242ac1200bd',
+                'name' => 'Jan',
+            ],
+        ];
+
+        $connection->insert('meta_objects', [
+            'id' => $id,
+            'type' => 'legacy_tags',
+            'object_type' => 'tags',
+            'schema_version' => '1.0.0',
+            'branch' => 'main',
+            'name' => 'Legacy typed tag',
+            'data' => json_encode($data, JSON_THROW_ON_ERROR),
+            'created_at' => $now,
+            'updated_at' => $now,
+            'last_updated' => $now,
+        ]);
+        $connection->insert('meta_object_revisions', [
+            'uuid' => $id,
+            'revision' => 1,
+            'data' => json_encode($data, JSON_THROW_ON_ERROR),
+            'created_at' => $now,
+        ]);
     }
 
     /**

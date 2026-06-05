@@ -21,7 +21,6 @@ final class Version20260605093000 extends AbstractMigration
                 id SERIAL NOT NULL,
                 uuid UUID NOT NULL,
                 revision INTEGER NOT NULL,
-                parent_id UUID DEFAULT NULL,
                 data JSONB NOT NULL,
                 created_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
                 deleted_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL,
@@ -29,7 +28,6 @@ final class Version20260605093000 extends AbstractMigration
             )
         SQL);
         $this->addSql('ALTER TABLE meta_object_revisions ADD CONSTRAINT fk_meta_object_revision_object FOREIGN KEY (uuid) REFERENCES meta_objects (id) ON DELETE CASCADE');
-        $this->addSql('ALTER TABLE meta_object_revisions ADD CONSTRAINT fk_meta_object_revision_parent FOREIGN KEY (parent_id) REFERENCES meta_objects (id) ON DELETE SET NULL');
         $this->addSql('CREATE UNIQUE INDEX uniq_meta_object_revision ON meta_object_revisions (uuid, revision)');
         $this->addSql('CREATE INDEX idx_meta_object_revisions_uuid_revision ON meta_object_revisions (uuid, revision DESC)');
     }

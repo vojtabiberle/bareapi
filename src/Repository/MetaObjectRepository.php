@@ -141,7 +141,7 @@ class MetaObjectRepository
                 ORDER BY revision DESC
                 LIMIT 1
             ) mor ON TRUE
-            WHERE mo.type = :type AND mo.deleted_at IS NULL
+            WHERE mo.object_type = :type AND mo.deleted_at IS NULL
         SQL;
         $params = [
             'type' => $type,
@@ -223,7 +223,7 @@ class MetaObjectRepository
                 mor.created_at AS revision_created_at
             FROM meta_objects mo
             JOIN meta_object_revisions mor ON mor.uuid = mo.id AND mor.deleted_at IS NULL
-            WHERE mo.type = :type AND mo.deleted_at IS NULL
+            WHERE mo.object_type = :type AND mo.deleted_at IS NULL
         SQL;
         $params = [
             'type' => $type,

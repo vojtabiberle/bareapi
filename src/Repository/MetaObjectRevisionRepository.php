@@ -29,9 +29,13 @@ final class MetaObjectRevisionRepository
      */
     public function createNext(MetaObject $object, array $data): MetaObjectRevision
     {
-        $revision = $this->latestRevisionNumber($object->getId()->toString()) + 1;
+        return $this->connection->transactional(function () use ($object, $data): MetaObjectRevision {
+            $uuid = $object->getId()->toString();
+            $this->lockObject($uuid);
+            $revision = $this->latestRevisionNumber($uuid) + 1;
 
-        return $this->insert($object->getId()->toString(), $revision, $data);
+            return $this->insert($uuid, $revision, $data);
+        });
     }
 
     public function get(string $uuid, int $revision): MetaObjectRevision
@@ -97,8 +101,8 @@ final class MetaObjectRevisionRepository
         $createdAt = new \DateTimeImmutable();
         $this->connection->executeStatement(
             <<<'SQL'
-                INSERT INTO meta_object_revisions (uuid, revision, parent_id, data, created_at)
-                VALUES (:uuid, :revision, NULL, :data, :created_at)
+                INSERT INTO meta_object_revisions (uuid, revision, data, created_at)
+                VALUES (:uuid, :revision, :data, :created_at)
             SQL,
             [
                 'uuid' => $uuid,
@@ -109,6 +113,16 @@ final class MetaObjectRevisionRepository
         );
 
         return new MetaObjectRevision($uuid, $revision, $data, $createdAt);
+    }
+
+    private function lockObject(string $uuid): void
+    {
+        $this->connection->fetchOne(
+            'SELECT id FROM meta_objects WHERE id = :uuid FOR UPDATE',
+            [
+                'uuid' => $uuid,
+            ],
+        );
     }
 
     /**
