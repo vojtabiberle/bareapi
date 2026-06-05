@@ -26,7 +26,9 @@ final class RepositoryObjectController
     {
         $object = $this->findObject($objectType, $id);
         if (! $object instanceof MetaObject) {
-            return new JsonResponse(['error' => 'Not found'], 404);
+            return new JsonResponse([
+                'error' => 'Not found',
+            ], 404);
         }
 
         return $this->responseFactory->ok($object, $object->getData());
@@ -37,7 +39,9 @@ final class RepositoryObjectController
     {
         $object = $this->findObject($objectType, $id);
         if (! $object instanceof MetaObject) {
-            return new JsonResponse(['error' => 'Not found'], 404);
+            return new JsonResponse([
+                'error' => 'Not found',
+            ], 404);
         }
 
         $payload = $this->requestPayload($request);
@@ -54,7 +58,9 @@ final class RepositoryObjectController
     {
         $object = $this->findObject($objectType, $id);
         if (! $object instanceof MetaObject) {
-            return new JsonResponse(['error' => 'Not found'], 404);
+            return new JsonResponse([
+                'error' => 'Not found',
+            ], 404);
         }
 
         $payload = $this->requestPayload($request);
@@ -70,7 +76,9 @@ final class RepositoryObjectController
     {
         $object = $this->findObject($objectType, $id);
         if (! $object instanceof MetaObject) {
-            return new JsonResponse(['error' => 'Not found'], 404);
+            return new JsonResponse([
+                'error' => 'Not found',
+            ], 404);
         }
 
         $this->repository->delete($object);
@@ -110,9 +118,13 @@ final class RepositoryObjectController
         try {
             $validated = $this->schemaValidator->validate($objectType, $data);
         } catch (\Bareapi\Exception\SchemaNotFoundException) {
-            return new JsonResponse(['error' => 'Unknown type'], 404);
+            return new JsonResponse([
+                'error' => 'Unknown type',
+            ], 404);
         } catch (\Bareapi\Exception\ValidationException $e) {
-            return new JsonResponse(['errors' => $e->getErrors()], 422);
+            return new JsonResponse([
+                'errors' => $e->getErrors(),
+            ], 422);
         }
 
         $attributes = ControllerUtil::toStringKeyedArray($validated);

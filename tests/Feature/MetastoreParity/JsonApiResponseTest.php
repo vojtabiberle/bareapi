@@ -30,7 +30,9 @@ final class JsonApiResponseTest extends FeatureTestCase
             '/api/v1/repository/tags',
             [],
             [],
-            ['CONTENT_TYPE' => 'application/json'],
+            [
+                'CONTENT_TYPE' => 'application/json',
+            ],
             json_encode($payload, JSON_THROW_ON_ERROR)
         );
 

@@ -25,7 +25,9 @@ final class RepositoryCreateController
     public function __invoke(string $objectType, Request $request): JsonResponse
     {
         if (! preg_match('/^[A-Za-z0-9_]+$/', $objectType)) {
-            return new JsonResponse(['error' => 'Invalid type'], 400);
+            return new JsonResponse([
+                'error' => 'Invalid type',
+            ], 400);
         }
 
         $payloadRaw = json_decode($request->getContent(), true);
@@ -37,9 +39,13 @@ final class RepositoryCreateController
         try {
             $validated = $this->schemaValidator->validate($objectType, $data);
         } catch (\Bareapi\Exception\SchemaNotFoundException) {
-            return new JsonResponse(['error' => 'Unknown type'], 404);
+            return new JsonResponse([
+                'error' => 'Unknown type',
+            ], 404);
         } catch (\Bareapi\Exception\ValidationException $e) {
-            return new JsonResponse(['errors' => $e->getErrors()], 422);
+            return new JsonResponse([
+                'errors' => $e->getErrors(),
+            ], 422);
         }
 
         $schemaVersion = isset($payload['schemaVersion']) && is_string($payload['schemaVersion'])

@@ -82,7 +82,9 @@ final class RepositoryRoutesTest extends FeatureTestCase
             $path,
             [],
             [],
-            ['CONTENT_TYPE' => 'application/json'],
+            [
+                'CONTENT_TYPE' => 'application/json',
+            ],
             $payload === null ? null : json_encode($payload, JSON_THROW_ON_ERROR)
         );
 
