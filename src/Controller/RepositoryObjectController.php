@@ -7,6 +7,7 @@ namespace Bareapi\Controller;
 use Bareapi\Entity\MetaObject;
 use Bareapi\Repository\MetaObjectRepository;
 use Bareapi\Repository\MetaObjectRevisionRepository;
+use Bareapi\Service\AuthorizationService;
 use Bareapi\Service\JsonApiResponseFactory;
 use Bareapi\Service\SchemaValidatorService;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,6 +19,7 @@ final class RepositoryObjectController
     public function __construct(
         private MetaObjectRepository $repository,
         private MetaObjectRevisionRepository $revisionRepository,
+        private AuthorizationService $authorizationService,
         private SchemaValidatorService $schemaValidator,
         private JsonApiResponseFactory $responseFactory,
     ) {
@@ -62,13 +64,18 @@ final class RepositoryObjectController
     }
 
     #[Route('/api/v1/repository/{objectType}/{id}/revisions/{revision}', name: 'repository_revision_delete', methods: ['DELETE'])]
-    public function deleteRevision(string $objectType, string $id, int $revision): JsonResponse
+    public function deleteRevision(string $objectType, string $id, int $revision, Request $request): JsonResponse
     {
         $object = $this->findObject($objectType, $id);
         if (! $object instanceof MetaObject) {
             return new JsonResponse([
                 'error' => 'Not found',
             ], 404);
+        }
+
+        $denied = $this->authorizationService->denyResponseForAction($objectType, 'delete', $request);
+        if ($denied instanceof JsonResponse) {
+            return $denied;
         }
 
         $this->revisionRepository->softDelete($object->getId()->toString(), $revision);
@@ -84,6 +91,11 @@ final class RepositoryObjectController
             return new JsonResponse([
                 'error' => 'Not found',
             ], 404);
+        }
+
+        $denied = $this->authorizationService->denyResponseForAction($objectType, 'update', $request);
+        if ($denied instanceof JsonResponse) {
+            return $denied;
         }
 
         $payload = $this->requestPayload($request);
@@ -105,6 +117,11 @@ final class RepositoryObjectController
             ], 404);
         }
 
+        $denied = $this->authorizationService->denyResponseForAction($objectType, 'update', $request);
+        if ($denied instanceof JsonResponse) {
+            return $denied;
+        }
+
         $payload = $this->requestPayload($request);
         $replacement = isset($payload['data']) && is_array($payload['data'])
             ? ControllerUtil::toStringKeyedArray($payload['data'])
@@ -114,13 +131,18 @@ final class RepositoryObjectController
     }
 
     #[Route('/api/v1/repository/{objectType}/{id}', name: 'repository_delete', methods: ['DELETE'])]
-    public function delete(string $objectType, string $id): JsonResponse
+    public function delete(string $objectType, string $id, Request $request): JsonResponse
     {
         $object = $this->findObject($objectType, $id);
         if (! $object instanceof MetaObject) {
             return new JsonResponse([
                 'error' => 'Not found',
             ], 404);
+        }
+
+        $denied = $this->authorizationService->denyResponseForAction($objectType, 'delete', $request);
+        if ($denied instanceof JsonResponse) {
+            return $denied;
         }
 
         $this->repository->delete($object);

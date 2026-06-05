@@ -7,6 +7,7 @@ namespace Bareapi\Controller;
 use Bareapi\Entity\MetaObject;
 use Bareapi\Repository\MetaObjectRepository;
 use Bareapi\Repository\MetaObjectRevisionRepository;
+use Bareapi\Service\AuthorizationService;
 use Bareapi\Service\JsonApiResponseFactory;
 use Bareapi\Service\SchemaValidatorService;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,6 +19,7 @@ final class RepositoryCreateController
     public function __construct(
         private MetaObjectRepository $repository,
         private MetaObjectRevisionRepository $revisionRepository,
+        private AuthorizationService $authorizationService,
         private SchemaValidatorService $schemaValidator,
         private JsonApiResponseFactory $responseFactory,
     ) {
@@ -30,6 +32,11 @@ final class RepositoryCreateController
             return new JsonResponse([
                 'error' => 'Invalid type',
             ], 400);
+        }
+
+        $denied = $this->authorizationService->denyResponseForAction($objectType, 'create', $request);
+        if ($denied instanceof JsonResponse) {
+            return $denied;
         }
 
         $payloadRaw = json_decode($request->getContent(), true);

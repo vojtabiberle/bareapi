@@ -25,8 +25,11 @@ trait RefreshDatabaseForWebTestTrait
             // Disable referential integrity
             $connection->executeStatement('SET session_replication_role = replica');
 
-            // Truncate meta_objects table
+            // Truncate runtime document state.
             $connection->executeStatement('TRUNCATE TABLE "meta_objects" RESTART IDENTITY CASCADE');
+            if ($connection->fetchOne("SELECT to_regclass('public.schemas')") === 'schemas') {
+                $connection->executeStatement('TRUNCATE TABLE "schemas" RESTART IDENTITY CASCADE');
+            }
 
             // Re-enable referential integrity
             $connection->executeStatement('SET session_replication_role = DEFAULT');
