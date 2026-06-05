@@ -61,6 +61,21 @@ final class RepositoryObjectController
         return $this->responseFactory->ok($object, $objectRevision->getData(), $objectRevision->getRevision());
     }
 
+    #[Route('/api/v1/repository/{objectType}/{id}/revisions/{revision}', name: 'repository_revision_delete', methods: ['DELETE'])]
+    public function deleteRevision(string $objectType, string $id, int $revision): JsonResponse
+    {
+        $object = $this->findObject($objectType, $id);
+        if (! $object instanceof MetaObject) {
+            return new JsonResponse([
+                'error' => 'Not found',
+            ], 404);
+        }
+
+        $this->revisionRepository->softDelete($object->getId()->toString(), $revision);
+
+        return $this->responseFactory->noContent();
+    }
+
     #[Route('/api/v1/repository/{objectType}/{id}', name: 'repository_patch', methods: ['PATCH'])]
     public function patch(string $objectType, string $id, Request $request): JsonResponse
     {

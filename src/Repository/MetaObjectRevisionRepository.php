@@ -62,6 +62,18 @@ final class MetaObjectRevisionRepository
         return is_numeric($latest) ? (int) $latest : 0;
     }
 
+    public function softDelete(string $uuid, int $revision): void
+    {
+        $this->connection->executeStatement(
+            'UPDATE meta_object_revisions SET deleted_at = :deleted_at WHERE uuid = :uuid AND revision = :revision AND deleted_at IS NULL',
+            [
+                'deleted_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+                'uuid' => $uuid,
+                'revision' => $revision,
+            ],
+        );
+    }
+
     /**
      * @param array<string, mixed> $data
      */

@@ -32,6 +32,10 @@ class MetaObjectRepository
     public function find(string $id): ?MetaObject
     {
         $obj = $this->em->find($this->entityClass, $id);
+        if ($obj instanceof MetaObject && $obj->getDeletedAt() !== null) {
+            return null;
+        }
+
         return $obj instanceof MetaObject ? $obj : null;
     }
 
@@ -57,7 +61,7 @@ class MetaObjectRepository
     {
         $filterableFields = $this->schemaService->getFilterableFields($type);
 
-        $sql = 'SELECT * FROM meta_objects WHERE type = :type';
+        $sql = 'SELECT * FROM meta_objects WHERE type = :type AND deleted_at IS NULL';
         $params = [
             'type' => $type,
         ];
@@ -105,7 +109,7 @@ class MetaObjectRepository
 
     public function delete(MetaObject $obj): void
     {
-        $this->em->remove($obj);
+        $obj->markDeleted(new \DateTimeImmutable());
         $this->em->flush();
     }
 
@@ -115,6 +119,7 @@ class MetaObjectRepository
         return $qb->select('m')
             ->from($this->entityClass, 'm')
             ->where('m.type = :type')
+            ->andWhere('m.deletedAt IS NULL')
             ->setParameter('type', $type);
     }
 }
