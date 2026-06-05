@@ -52,10 +52,12 @@ Supported repository routes:
 - `PATCH /api/v1/repository/{objectType}/{id}`
 - `PUT /api/v1/repository/{objectType}/{id}`
 - `DELETE /api/v1/repository/{objectType}/{id}`
+- `GET /api/v1/repository/{objectType}/revisions`
 - `GET /api/v1/repository/{objectType}/{id}/revisions/{revision}`
 - `DELETE /api/v1/repository/{objectType}/{id}/revisions/{revision}`
 
 Deletes are soft deletes. Normal reads and lists hide deleted objects and deleted revisions.
+Object, revision, and reference writes are wrapped in one transaction for create, update, and delete flows.
 
 ## Schemas
 

@@ -120,7 +120,7 @@ class MetaObjectRepository
             'revision',
             'revision_created_at',
         ];
-        $filterableFields = $schemaRepository->filterableFields($type);
+        $filterableFields = null;
         $sql = <<<'SQL'
             SELECT mo.id, mor.revision, mor.data
             FROM meta_objects mo
@@ -145,6 +145,7 @@ class MetaObjectRepository
                 continue;
             }
 
+            $filterableFields ??= $schemaRepository->filterableFields($type);
             if (! in_array($field, $filterableFields, true)) {
                 throw new InvalidFilterException($field, $type);
             }
@@ -158,7 +159,7 @@ class MetaObjectRepository
         if ($orderBy !== null) {
             if (in_array($orderBy, $allowedTableFields, true)) {
                 $sql .= sprintf(' ORDER BY %s %s', $this->tableColumn($orderBy), strtoupper($query->orderDirection()));
-            } elseif (in_array($orderBy, $filterableFields, true)) {
+            } elseif (in_array($orderBy, $filterableFields ?? $schemaRepository->filterableFields($type), true)) {
                 $sql .= sprintf(' ORDER BY mor.data #>> %s %s', $this->jsonPathLiteral($orderBy), strtoupper($query->orderDirection()));
             } else {
                 throw new InvalidFilterException($orderBy, $type);
@@ -177,8 +178,99 @@ class MetaObjectRepository
             $params['offset'] = $query->offset();
         }
 
-        $rows = $this->em->getConnection()->fetchAllAssociative($sql, $params);
+        return $this->hydrateListItems($this->em->getConnection()->fetchAllAssociative($sql, $params));
+    }
 
+    /**
+     * @return array<int, MetaObjectListItem>
+     * @throws InvalidFilterException
+     * @throws SchemaNotFoundException
+     */
+    public function listRepositoryRevisions(string $type, FilterQuery $query, \Bareapi\Repository\SchemaRepository $schemaRepository): array
+    {
+        $allowedTableFields = [
+            'schema_version',
+            'branch',
+            'name',
+            'last_updated',
+            'created_at',
+            'deleted_at',
+            'revision',
+            'revision_created_at',
+        ];
+        $filterableFields = null;
+        $sql = <<<'SQL'
+            SELECT mo.id, mor.revision, mor.data
+            FROM meta_objects mo
+            JOIN meta_object_revisions mor ON mor.uuid = mo.id AND mor.deleted_at IS NULL
+            WHERE mo.type = :type AND mo.deleted_at IS NULL
+        SQL;
+        $params = [
+            'type' => $type,
+        ];
+
+        foreach ($query->filters() as $field => $value) {
+            if (in_array($field, $allowedTableFields, true)) {
+                $paramName = 'filter_' . str_replace('.', '_', $field);
+                $sql .= sprintf(' AND %s = :%s', $this->tableColumn($field), $paramName);
+                $params[$paramName] = $value;
+                continue;
+            }
+
+            $filterableFields ??= $schemaRepository->filterableFields($type);
+            if (! in_array($field, $filterableFields, true)) {
+                throw new InvalidFilterException($field, $type);
+            }
+
+            $paramName = 'filter_' . str_replace('.', '_', $field);
+            $sql .= sprintf(' AND mor.data #>> %s = :%s', $this->jsonPathLiteral($field), $paramName);
+            $params[$paramName] = $value;
+        }
+
+        $orderBy = $query->orderBy();
+        if ($orderBy !== null) {
+            if (in_array($orderBy, $allowedTableFields, true)) {
+                $sql .= sprintf(' ORDER BY %s %s', $this->tableColumn($orderBy), strtoupper($query->orderDirection()));
+            } elseif (in_array($orderBy, $filterableFields ?? $schemaRepository->filterableFields($type), true)) {
+                $sql .= sprintf(' ORDER BY mor.data #>> %s %s', $this->jsonPathLiteral($orderBy), strtoupper($query->orderDirection()));
+            } else {
+                throw new InvalidFilterException($orderBy, $type);
+            }
+        } else {
+            $sql .= ' ORDER BY mo.created_at ASC, mor.revision ASC';
+        }
+
+        if ($query->limit() !== null) {
+            $sql .= ' LIMIT :limit';
+            $params['limit'] = $query->limit();
+        }
+
+        if ($query->offset() > 0) {
+            $sql .= ' OFFSET :offset';
+            $params['offset'] = $query->offset();
+        }
+
+        return $this->hydrateListItems($this->em->getConnection()->fetchAllAssociative($sql, $params));
+    }
+
+    public function save(MetaObject $obj): void
+    {
+        $this->em->persist($obj);
+        $this->em->flush();
+    }
+
+    public function delete(MetaObject $obj): void
+    {
+        $obj->markDeleted(new \DateTimeImmutable());
+        $this->em->flush();
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $rows
+     * @return array<int, MetaObjectListItem>
+     */
+    private function hydrateListItems(array $rows): array
+    {
         return array_values(array_filter(array_map(function (array $row): ?MetaObjectListItem {
             $id = ControllerUtil::toStringSafe($row['id'] ?? '');
             $object = $this->find($id);
@@ -195,18 +287,6 @@ class MetaObjectRepository
                 $revision
             );
         }, $rows)));
-    }
-
-    public function save(MetaObject $obj): void
-    {
-        $this->em->persist($obj);
-        $this->em->flush();
-    }
-
-    public function delete(MetaObject $obj): void
-    {
-        $obj->markDeleted(new \DateTimeImmutable());
-        $this->em->flush();
     }
 
     private function createTypeQueryBuilder(string $type): QueryBuilder

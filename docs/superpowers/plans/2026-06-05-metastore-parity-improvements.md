@@ -17,6 +17,9 @@ Goal: bring BareAPI closer to the newer document-store design while keeping it p
 - [x] Add schema-driven filters, dotted JSON paths, table filters, ordering, limit, and offset.
 - [x] Add reference integrity through `x-bareapi.references` and `meta_refs`.
 - [x] Add restrict and cascade delete behavior for references.
+- [x] Wrap object, revision, and reference writes in one transaction.
+- [x] Add `GET /api/v1/repository/{objectType}/revisions`.
+- [x] Add reference hardening tests for replacement, cascade chains, and restrict rollback.
 - [x] Add `/health-check`.
 - [x] Add `/api/v1/documentation/openapi.json`.
 - [x] Update `/` service index.
@@ -24,8 +27,6 @@ Goal: bring BareAPI closer to the newer document-store design while keeping it p
 
 ## Remaining Hardening
 
-- Move create/update object and reference writes into one database transaction.
 - Add a dedicated schema write API if runtime schema deployment is required.
-- Add revision collection listing if clients need `GET /api/v1/repository/{objectType}/revisions`.
 - Replace the test bearer-token permission source with a production identity provider.
 - Broaden OpenAPI schemas from endpoint coverage to full request/response component schemas.

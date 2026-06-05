@@ -163,6 +163,26 @@
         }
       }
     },
+    "/api/v1/repository/{objectType}/revisions": {
+      "get": {
+        "summary": "List repository object revisions",
+        "parameters": [
+          {
+            "name": "objectType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JSON:API revision collection"
+          }
+        }
+      }
+    },
     "/api/v1/repository/{objectType}/{id}/revisions/{revision}": {
       "get": {
         "summary": "Get repository object revision",

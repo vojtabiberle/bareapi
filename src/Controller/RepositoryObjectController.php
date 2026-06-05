@@ -13,6 +13,7 @@ use Bareapi\Service\AuthorizationService;
 use Bareapi\Service\JsonApiResponseFactory;
 use Bareapi\Service\ReferenceIntegrityService;
 use Bareapi\Service\SchemaValidatorService;
+use Bareapi\Service\TransactionManager;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -24,6 +25,7 @@ final class RepositoryObjectController
         private MetaObjectRevisionRepository $revisionRepository,
         private AuthorizationService $authorizationService,
         private ReferenceIntegrityService $referenceIntegrityService,
+        private TransactionManager $transactionManager,
         private SchemaValidatorService $schemaValidator,
         private JsonApiResponseFactory $responseFactory,
     ) {
@@ -150,14 +152,16 @@ final class RepositoryObjectController
         }
 
         try {
-            $this->referenceIntegrityService->applyDeleteRules($object);
+            $this->transactionManager->transactional(function () use ($object): void {
+                $this->referenceIntegrityService->applyDeleteRules($object);
+                $this->repository->delete($object);
+            });
         } catch (ReferenceDeleteRestrictedException $e) {
             return new JsonResponse([
                 'error' => $e->getMessage(),
             ], 409);
         }
 
-        $this->repository->delete($object);
         return $this->responseFactory->noContent();
     }
 
@@ -204,17 +208,19 @@ final class RepositoryObjectController
 
         $attributes = ControllerUtil::toStringKeyedArray($validated);
         try {
-            $this->referenceIntegrityService->replaceReferencesForObject($objectType, $object->getId()->toString(), $attributes);
+            $revision = $this->transactionManager->transactional(function () use ($object, $objectType, $attributes): \Bareapi\Entity\MetaObjectRevision {
+                $this->referenceIntegrityService->replaceReferencesForObject($objectType, $object->getId()->toString(), $attributes);
+                $object->setData($attributes);
+                $object->setUpdatedAt(new \DateTimeImmutable());
+                $this->repository->save($object);
+
+                return $this->revisionRepository->createNext($object, $attributes);
+            });
         } catch (ReferenceValidationException $e) {
             return new JsonResponse([
                 'error' => $e->getMessage(),
             ], 422);
         }
-
-        $object->setData($attributes);
-        $object->setUpdatedAt(new \DateTimeImmutable());
-        $this->repository->save($object);
-        $revision = $this->revisionRepository->createNext($object, $attributes);
 
         return $this->responseFactory->ok($object, $attributes, $revision->getRevision());
     }

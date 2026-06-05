@@ -42,6 +42,7 @@ graph LR
 - `AuthorizationService`: enforces optional `x-bareapi.acl` permissions for writes.
 - `FilterParser`: parses raw query strings so dotted JSON paths are preserved.
 - `ReferenceIntegrityService`: extracts references, validates targets, and applies restrict/cascade delete rules.
+- `TransactionManager`: wraps multi-table repository writes so object metadata, revisions, and reference rows commit or roll back together.
 
 ## Compatibility
 

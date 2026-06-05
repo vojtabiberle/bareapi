@@ -47,6 +47,44 @@ final class RevisionLifecycleTest extends FeatureTestCase
         ], $this->jsonApiAttributes($firstRevision));
     }
 
+    public function testListsRepositoryRevisions(): void
+    {
+        $created = $this->requestJsonApi('POST', '/api/v1/repository/notes', [
+            'name' => 'Listed Revision Note',
+            'branch' => 'main',
+            'schemaVersion' => '1.0.0',
+            'data' => [
+                'title' => 'Initial title',
+                'content' => 'Initial content',
+            ],
+        ], 201);
+        $id = $this->jsonApiId($created);
+
+        $this->requestJsonApi('PATCH', '/api/v1/repository/notes/' . $id, [
+            'data' => [
+                'content' => 'Updated content',
+            ],
+        ], 200);
+
+        $listed = $this->requestJsonApi('GET', '/api/v1/repository/notes/revisions?name=Listed%20Revision%20Note', null, 200);
+
+        $this->assertArrayHasKey('data', $listed);
+        $this->assertIsArray($listed['data']);
+        $this->assertCount(2, $listed['data']);
+        $this->assertSame([1, 2], array_map(
+            static function (mixed $item): int {
+                self::assertIsArray($item);
+                self::assertArrayHasKey('meta', $item);
+                self::assertIsArray($item['meta']);
+                self::assertArrayHasKey('revision', $item['meta']);
+                self::assertIsInt($item['meta']['revision']);
+
+                return $item['meta']['revision'];
+            },
+            $listed['data']
+        ));
+    }
+
     /**
      * @param array<string, mixed>|null $payload
      * @return array<string, mixed>

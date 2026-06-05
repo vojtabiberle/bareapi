@@ -12,6 +12,8 @@ use Bareapi\Service\AuthorizationService;
 use Bareapi\Service\JsonApiResponseFactory;
 use Bareapi\Service\ReferenceIntegrityService;
 use Bareapi\Service\SchemaValidatorService;
+use Bareapi\Service\TransactionManager;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -23,6 +25,7 @@ final class RepositoryCreateController
         private MetaObjectRevisionRepository $revisionRepository,
         private AuthorizationService $authorizationService,
         private ReferenceIntegrityService $referenceIntegrityService,
+        private TransactionManager $transactionManager,
         private SchemaValidatorService $schemaValidator,
         private JsonApiResponseFactory $responseFactory,
     ) {
@@ -72,24 +75,23 @@ final class RepositoryCreateController
 
         $object = new MetaObject($objectType, $schemaVersion, ControllerUtil::toStringKeyedArray($validated), $name, $branch);
         try {
-            $this->referenceIntegrityService->replaceReferencesForObject(
-                $objectType,
-                $object->getId()->toString(),
-                ControllerUtil::toStringKeyedArray($validated)
-            );
+            $revision = $this->transactionManager->transactional(function () use ($object, $objectType, $validated): \Bareapi\Entity\MetaObjectRevision {
+                $attributes = ControllerUtil::toStringKeyedArray($validated);
+                $this->repository->save($object);
+                $revision = $this->revisionRepository->createInitial($object, $attributes);
+                $this->referenceIntegrityService->replaceReferencesForObject($objectType, $object->getId()->toString(), $attributes);
+
+                return $revision;
+            });
         } catch (ReferenceValidationException $e) {
             return new JsonResponse([
                 'error' => $e->getMessage(),
             ], 422);
+        } catch (UniqueConstraintViolationException) {
+            return new JsonResponse([
+                'error' => 'Object already exists',
+            ], 409);
         }
-
-        $this->repository->save($object);
-        $revision = $this->revisionRepository->createInitial($object, ControllerUtil::toStringKeyedArray($validated));
-        $this->referenceIntegrityService->replaceReferencesForObject(
-            $objectType,
-            $object->getId()->toString(),
-            ControllerUtil::toStringKeyedArray($validated)
-        );
 
         return $this->responseFactory->created(
             $object,
