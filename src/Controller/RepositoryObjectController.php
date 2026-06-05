@@ -6,6 +6,7 @@ namespace Bareapi\Controller;
 
 use Bareapi\Entity\MetaObject;
 use Bareapi\Repository\MetaObjectRepository;
+use Bareapi\Repository\MetaObjectRevisionRepository;
 use Bareapi\Service\JsonApiResponseFactory;
 use Bareapi\Service\SchemaValidatorService;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -16,6 +17,7 @@ final class RepositoryObjectController
 {
     public function __construct(
         private MetaObjectRepository $repository,
+        private MetaObjectRevisionRepository $revisionRepository,
         private SchemaValidatorService $schemaValidator,
         private JsonApiResponseFactory $responseFactory,
     ) {
@@ -31,7 +33,32 @@ final class RepositoryObjectController
             ], 404);
         }
 
-        return $this->responseFactory->ok($object, $object->getData());
+        return $this->responseFactory->ok(
+            $object,
+            $object->getData(),
+            max(1, $this->revisionRepository->latestRevisionNumber($object->getId()->toString()))
+        );
+    }
+
+    #[Route('/api/v1/repository/{objectType}/{id}/revisions/{revision}', name: 'repository_revision', methods: ['GET'])]
+    public function revision(string $objectType, string $id, int $revision): JsonResponse
+    {
+        $object = $this->findObject($objectType, $id);
+        if (! $object instanceof MetaObject) {
+            return new JsonResponse([
+                'error' => 'Not found',
+            ], 404);
+        }
+
+        try {
+            $objectRevision = $this->revisionRepository->get($object->getId()->toString(), $revision);
+        } catch (\Throwable) {
+            return new JsonResponse([
+                'error' => 'Not found',
+            ], 404);
+        }
+
+        return $this->responseFactory->ok($object, $objectRevision->getData(), $objectRevision->getRevision());
     }
 
     #[Route('/api/v1/repository/{objectType}/{id}', name: 'repository_patch', methods: ['PATCH'])]
@@ -131,7 +158,8 @@ final class RepositoryObjectController
         $object->setData($attributes);
         $object->setUpdatedAt(new \DateTimeImmutable());
         $this->repository->save($object);
+        $revision = $this->revisionRepository->createNext($object, $attributes);
 
-        return $this->responseFactory->ok($object, $attributes);
+        return $this->responseFactory->ok($object, $attributes, $revision->getRevision());
     }
 }

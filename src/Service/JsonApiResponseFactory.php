@@ -35,10 +35,10 @@ final class JsonApiResponseFactory
     /**
      * @param array<string, mixed> $attributes
      */
-    public function ok(MetaObject $object, array $attributes): JsonResponse
+    public function ok(MetaObject $object, array $attributes, int $revision = 1): JsonResponse
     {
         return new JsonResponse([
-            'data' => $this->resource($object, $attributes),
+            'data' => $this->resource($object, $attributes, $revision),
         ]);
     }
 
@@ -56,7 +56,7 @@ final class JsonApiResponseFactory
      *   attributes: array<string, mixed>
      * }
      */
-    private function resource(MetaObject $object, array $attributes): array
+    private function resource(MetaObject $object, array $attributes, int $revision): array
     {
         return [
             'type' => $object->getType(),
@@ -67,7 +67,7 @@ final class JsonApiResponseFactory
                 'name' => $object->getName(),
                 'lastUpdated' => $object->getUpdatedAt()->format(\DateTimeImmutable::ATOM),
                 'createdAt' => $object->getCreatedAt()->format(\DateTimeImmutable::ATOM),
-                'revision' => 1,
+                'revision' => $revision,
                 'revisionCreatedAt' => $object->getCreatedAt()->format(\DateTimeImmutable::ATOM),
             ],
             'attributes' => $attributes,

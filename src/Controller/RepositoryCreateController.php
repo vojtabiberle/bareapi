@@ -6,6 +6,7 @@ namespace Bareapi\Controller;
 
 use Bareapi\Entity\MetaObject;
 use Bareapi\Repository\MetaObjectRepository;
+use Bareapi\Repository\MetaObjectRevisionRepository;
 use Bareapi\Service\JsonApiResponseFactory;
 use Bareapi\Service\SchemaValidatorService;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -16,6 +17,7 @@ final class RepositoryCreateController
 {
     public function __construct(
         private MetaObjectRepository $repository,
+        private MetaObjectRevisionRepository $revisionRepository,
         private SchemaValidatorService $schemaValidator,
         private JsonApiResponseFactory $responseFactory,
     ) {
@@ -60,12 +62,13 @@ final class RepositoryCreateController
 
         $object = new MetaObject($objectType, $schemaVersion, ControllerUtil::toStringKeyedArray($validated), $name, $branch);
         $this->repository->save($object);
+        $revision = $this->revisionRepository->createInitial($object, ControllerUtil::toStringKeyedArray($validated));
 
         return $this->responseFactory->created(
             $object,
             $name,
             $branch,
-            1,
+            $revision->getRevision(),
             ControllerUtil::toStringKeyedArray($validated)
         );
     }
