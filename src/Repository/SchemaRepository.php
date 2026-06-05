@@ -107,6 +107,23 @@ final class SchemaRepository
     }
 
     /**
+     * @return array<int, string>
+     */
+    public function filterableFields(string $objectType): array
+    {
+        $schema = $this->getByObjectType($objectType)->getSchema();
+        $properties = $schema['properties'] ?? null;
+        if (! is_array($properties)) {
+            return [];
+        }
+
+        $allPrimitive = [];
+        $explicit = $this->collectFilterableFields($properties, '', $allPrimitive);
+
+        return $explicit === [] ? $allPrimitive : $explicit;
+    }
+
+    /**
      * @param array<string, mixed> $row
      */
     private function hydrate(array $row): Schema
@@ -158,6 +175,38 @@ final class SchemaRepository
         }
 
         return false;
+    }
+
+    /**
+     * @param array<mixed> $properties
+     * @param array<int, string> $allPrimitive
+     * @return array<int, string>
+     */
+    private function collectFilterableFields(array $properties, string $prefix, array &$allPrimitive): array
+    {
+        $explicit = [];
+        foreach ($properties as $name => $definition) {
+            if (! is_string($name) || ! is_array($definition)) {
+                continue;
+            }
+
+            $path = $prefix === '' ? $name : $prefix . '.' . $name;
+            $type = $definition['type'] ?? null;
+            if (is_string($type) && in_array($type, ['string', 'integer', 'number', 'boolean'], true)) {
+                $allPrimitive[] = $path;
+            }
+
+            if (($definition['x-filterable'] ?? false) === true) {
+                $explicit[] = $path;
+            }
+
+            $nestedProperties = $definition['properties'] ?? null;
+            if (is_array($nestedProperties)) {
+                $explicit = array_merge($explicit, $this->collectFilterableFields($nestedProperties, $path, $allPrimitive));
+            }
+        }
+
+        return array_values(array_unique($explicit));
     }
 
     /**

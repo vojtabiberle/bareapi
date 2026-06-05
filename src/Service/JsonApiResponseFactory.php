@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Bareapi\Service;
 
 use Bareapi\Entity\MetaObject;
+use Bareapi\Repository\MetaObjectListItem;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 final class JsonApiResponseFactory
@@ -45,6 +46,19 @@ final class JsonApiResponseFactory
     public function noContent(): JsonResponse
     {
         return new JsonResponse(null, 204);
+    }
+
+    /**
+     * @param array<int, MetaObjectListItem> $items
+     */
+    public function collection(array $items): JsonResponse
+    {
+        return new JsonResponse([
+            'data' => array_map(
+                fn (MetaObjectListItem $item): array => $this->resource($item->object(), $item->data(), $item->revision()),
+                $items
+            ),
+        ]);
     }
 
     /**
