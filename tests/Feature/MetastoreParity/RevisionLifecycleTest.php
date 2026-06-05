@@ -31,6 +31,7 @@ final class RevisionLifecycleTest extends FeatureTestCase
         $id = $this->jsonApiId($created);
         $this->assertSame(1, $this->jsonApiRevision($created));
 
+        sleep(1);
         $patched = $this->requestJsonApi('PATCH', '/api/v1/repository/notes/' . $id, [
             'data' => [
                 'content' => 'Updated content',
@@ -38,9 +39,17 @@ final class RevisionLifecycleTest extends FeatureTestCase
         ], 200);
         $this->assertSame(2, $this->jsonApiRevision($patched));
         $this->assertSame('Updated content', $this->jsonApiAttributes($patched)['content']);
+        $this->assertNotSame(
+            $this->jsonApiRevisionCreatedAt($created),
+            $this->jsonApiRevisionCreatedAt($patched)
+        );
 
         $firstRevision = $this->requestJsonApi('GET', '/api/v1/repository/notes/' . $id . '/revisions/1', null, 200);
         $this->assertSame(1, $this->jsonApiRevision($firstRevision));
+        $this->assertSame(
+            $this->jsonApiRevisionCreatedAt($created),
+            $this->jsonApiRevisionCreatedAt($firstRevision)
+        );
         $this->assertSame([
             'title' => 'Initial title',
             'content' => 'Initial content',
@@ -60,6 +69,7 @@ final class RevisionLifecycleTest extends FeatureTestCase
         ], 201);
         $id = $this->jsonApiId($created);
 
+        sleep(1);
         $this->requestJsonApi('PATCH', '/api/v1/repository/notes/' . $id, [
             'data' => [
                 'content' => 'Updated content',
@@ -83,6 +93,10 @@ final class RevisionLifecycleTest extends FeatureTestCase
             },
             $listed['data']
         ));
+        $this->assertNotSame(
+            $this->collectionRevisionCreatedAt($listed, 0),
+            $this->collectionRevisionCreatedAt($listed, 1)
+        );
     }
 
     /**
@@ -134,6 +148,37 @@ final class RevisionLifecycleTest extends FeatureTestCase
         $this->assertIsInt($data['meta']['revision']);
 
         return $data['meta']['revision'];
+    }
+
+    /**
+     * @param array<string, mixed> $document
+     */
+    private function jsonApiRevisionCreatedAt(array $document): string
+    {
+        $data = $this->jsonApiData($document);
+        $this->assertArrayHasKey('meta', $data);
+        $this->assertIsArray($data['meta']);
+        $this->assertArrayHasKey('revisionCreatedAt', $data['meta']);
+        $this->assertIsString($data['meta']['revisionCreatedAt']);
+
+        return $data['meta']['revisionCreatedAt'];
+    }
+
+    /**
+     * @param array<string, mixed> $document
+     */
+    private function collectionRevisionCreatedAt(array $document, int $index): string
+    {
+        $this->assertArrayHasKey('data', $document);
+        $this->assertIsArray($document['data']);
+        $this->assertArrayHasKey($index, $document['data']);
+        $this->assertIsArray($document['data'][$index]);
+        $this->assertArrayHasKey('meta', $document['data'][$index]);
+        $this->assertIsArray($document['data'][$index]['meta']);
+        $this->assertArrayHasKey('revisionCreatedAt', $document['data'][$index]['meta']);
+        $this->assertIsString($document['data'][$index]['meta']['revisionCreatedAt']);
+
+        return $document['data'][$index]['meta']['revisionCreatedAt'];
     }
 
     /**

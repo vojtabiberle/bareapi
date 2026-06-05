@@ -18,7 +18,26 @@ final class DocumentationController
     public function openApi(): JsonResponse
     {
         $path = $this->projectDir . '/docs/api/openapi.json';
-        $document = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+        if (! is_readable($path)) {
+            return new JsonResponse([
+                'error' => 'OpenAPI document not found',
+            ], 404);
+        }
+
+        $contents = file_get_contents($path);
+        if (! is_string($contents)) {
+            return new JsonResponse([
+                'error' => 'OpenAPI document cannot be read',
+            ], 500);
+        }
+
+        try {
+            $document = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return new JsonResponse([
+                'error' => 'OpenAPI document is invalid',
+            ], 500);
+        }
 
         return new JsonResponse(is_array($document) ? $document : []);
     }

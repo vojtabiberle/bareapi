@@ -84,7 +84,6 @@ Table fields can also be filtered or ordered:
 - `name`
 - `last_updated`
 - `created_at`
-- `deleted_at`
 - `revision`
 - `revision_created_at`
 

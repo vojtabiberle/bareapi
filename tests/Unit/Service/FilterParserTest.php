@@ -34,4 +34,16 @@ final class FilterParserTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $parser->parse($request);
     }
+
+    public function testDecodesPlusAsSpaceInFormEncodedQueryStrings(): void
+    {
+        $parser = new FilterParser();
+        $request = Request::create('/api/v1/repository/tags?name=Foo+Bar');
+
+        $query = $parser->parse($request);
+
+        $this->assertSame([
+            'name' => 'Foo Bar',
+        ], $query->filters());
+    }
 }

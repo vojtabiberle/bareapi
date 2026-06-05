@@ -116,13 +116,23 @@ class MetaObjectRepository
             'name',
             'last_updated',
             'created_at',
-            'deleted_at',
             'revision',
             'revision_created_at',
         ];
         $filterableFields = null;
         $sql = <<<'SQL'
-            SELECT mo.id, mor.revision, mor.data
+            SELECT
+                mo.id,
+                mo.type,
+                mo.schema_version,
+                mo.branch,
+                mo.name,
+                mo.created_at,
+                mo.updated_at,
+                mo.last_updated,
+                mor.revision,
+                mor.data,
+                mor.created_at AS revision_created_at
             FROM meta_objects mo
             JOIN LATERAL (
                 SELECT revision, data, created_at
@@ -194,13 +204,23 @@ class MetaObjectRepository
             'name',
             'last_updated',
             'created_at',
-            'deleted_at',
             'revision',
             'revision_created_at',
         ];
         $filterableFields = null;
         $sql = <<<'SQL'
-            SELECT mo.id, mor.revision, mor.data
+            SELECT
+                mo.id,
+                mo.type,
+                mo.schema_version,
+                mo.branch,
+                mo.name,
+                mo.created_at,
+                mo.updated_at,
+                mo.last_updated,
+                mor.revision,
+                mor.data,
+                mor.created_at AS revision_created_at
             FROM meta_objects mo
             JOIN meta_object_revisions mor ON mor.uuid = mo.id AND mor.deleted_at IS NULL
             WHERE mo.type = :type AND mo.deleted_at IS NULL
@@ -273,18 +293,31 @@ class MetaObjectRepository
     {
         return array_values(array_filter(array_map(function (array $row): ?MetaObjectListItem {
             $id = ControllerUtil::toStringSafe($row['id'] ?? '');
-            $object = $this->find($id);
-            if (! $object instanceof MetaObject) {
+            if ($id === '') {
                 return null;
             }
 
             $data = json_decode(ControllerUtil::toStringSafe($row['data'] ?? '{}'), true, 512, JSON_THROW_ON_ERROR);
             $revision = (int) ControllerUtil::toStringSafe($row['revision'] ?? '1');
+            $attributes = is_array($data) ? ControllerUtil::toStringKeyedArray($data) : [];
+            $object = MetaObject::fromStorage(
+                $id,
+                ControllerUtil::toStringSafe($row['type'] ?? ''),
+                ControllerUtil::toStringSafe($row['schema_version'] ?? ''),
+                $attributes,
+                ControllerUtil::toStringSafe($row['name'] ?? ''),
+                ControllerUtil::toStringSafe($row['branch'] ?? ''),
+                new \DateTimeImmutable(ControllerUtil::toStringSafe($row['created_at'] ?? 'now')),
+                new \DateTimeImmutable(ControllerUtil::toStringSafe($row['updated_at'] ?? 'now')),
+                new \DateTimeImmutable(ControllerUtil::toStringSafe($row['last_updated'] ?? 'now')),
+                null,
+            );
 
             return new MetaObjectListItem(
                 $object,
-                is_array($data) ? ControllerUtil::toStringKeyedArray($data) : [],
-                $revision
+                $attributes,
+                $revision,
+                new \DateTimeImmutable(ControllerUtil::toStringSafe($row['revision_created_at'] ?? 'now')),
             );
         }, $rows)));
     }

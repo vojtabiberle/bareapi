@@ -63,8 +63,8 @@ final class FilterParser
             $parts = explode('=', $pair, 2);
             $rawKey = $parts[0];
             $rawValue = $parts[1] ?? '';
-            $key = rawurldecode($rawKey);
-            $value = rawurldecode($rawValue);
+            $key = urldecode($rawKey);
+            $value = urldecode($rawValue);
             $pairs[$key] = trim($value);
         }
 

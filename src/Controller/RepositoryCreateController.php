@@ -65,7 +65,7 @@ final class RepositoryCreateController
 
         $schemaVersion = isset($payload['schemaVersion']) && is_string($payload['schemaVersion'])
             ? $payload['schemaVersion']
-            : '1.0';
+            : '1.0.0';
         $name = isset($payload['name']) && is_string($payload['name'])
             ? $payload['name']
             : '';
@@ -95,9 +95,8 @@ final class RepositoryCreateController
 
         return $this->responseFactory->created(
             $object,
-            $name,
-            $branch,
             $revision->getRevision(),
+            $revision->getCreatedAt(),
             ControllerUtil::toStringKeyedArray($validated)
         );
     }

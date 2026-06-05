@@ -41,10 +41,16 @@ final class RepositoryObjectController
             ], 404);
         }
 
+        $latestRevision = $this->revisionRepository->latest($object->getId()->toString());
+        if ($latestRevision === null) {
+            return $this->responseFactory->ok($object, $object->getData());
+        }
+
         return $this->responseFactory->ok(
             $object,
             $object->getData(),
-            max(1, $this->revisionRepository->latestRevisionNumber($object->getId()->toString()))
+            $latestRevision->getRevision(),
+            $latestRevision->getCreatedAt()
         );
     }
 
@@ -60,13 +66,18 @@ final class RepositoryObjectController
 
         try {
             $objectRevision = $this->revisionRepository->get($object->getId()->toString(), $revision);
-        } catch (\Throwable) {
+        } catch (\Bareapi\Exception\RevisionNotFoundException) {
             return new JsonResponse([
                 'error' => 'Not found',
             ], 404);
         }
 
-        return $this->responseFactory->ok($object, $objectRevision->getData(), $objectRevision->getRevision());
+        return $this->responseFactory->ok(
+            $object,
+            $objectRevision->getData(),
+            $objectRevision->getRevision(),
+            $objectRevision->getCreatedAt()
+        );
     }
 
     #[Route('/api/v1/repository/{objectType}/{id}/revisions/{revision}', name: 'repository_revision_delete', methods: ['DELETE'])]
@@ -222,6 +233,6 @@ final class RepositoryObjectController
             ], 422);
         }
 
-        return $this->responseFactory->ok($object, $attributes, $revision->getRevision());
+        return $this->responseFactory->ok($object, $attributes, $revision->getRevision(), $revision->getCreatedAt());
     }
 }

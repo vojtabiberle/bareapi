@@ -29,6 +29,7 @@ final class OperationalEndpointTest extends FeatureTestCase
         $this->assertIsArray($response);
         $this->assertSame('ok', $response['status'] ?? null);
         $this->assertSame('BareAPI', $response['service'] ?? null);
+        $this->assertArrayNotHasKey('error', $response);
     }
 
     public function testDocumentationReturnsOpenApiDocument(): void

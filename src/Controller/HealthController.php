@@ -20,12 +20,11 @@ final class HealthController
     {
         try {
             $this->connection->fetchOne('SELECT 1');
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             return new JsonResponse([
                 'status' => 'error',
                 'service' => 'BareAPI',
                 'database' => 'unavailable',
-                'error' => $e->getMessage(),
             ], 503);
         }
 

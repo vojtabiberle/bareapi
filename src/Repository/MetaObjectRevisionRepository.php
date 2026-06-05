@@ -6,7 +6,7 @@ namespace Bareapi\Repository;
 
 use Bareapi\Entity\MetaObject;
 use Bareapi\Entity\MetaObjectRevision;
-use Bareapi\Exception\SchemaNotFoundException;
+use Bareapi\Exception\RevisionNotFoundException;
 use Doctrine\DBAL\Connection;
 
 final class MetaObjectRevisionRepository
@@ -44,7 +44,22 @@ final class MetaObjectRevisionRepository
             ],
         );
         if (! is_array($row)) {
-            throw new SchemaNotFoundException('revision');
+            throw new RevisionNotFoundException($uuid, $revision);
+        }
+
+        return $this->hydrate($row);
+    }
+
+    public function latest(string $uuid): ?MetaObjectRevision
+    {
+        $row = $this->connection->fetchAssociative(
+            'SELECT uuid, revision, data, created_at FROM meta_object_revisions WHERE uuid = :uuid AND deleted_at IS NULL ORDER BY revision DESC LIMIT 1',
+            [
+                'uuid' => $uuid,
+            ],
+        );
+        if (! is_array($row)) {
+            return null;
         }
 
         return $this->hydrate($row);

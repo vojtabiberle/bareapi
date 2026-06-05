@@ -15,6 +15,7 @@ final class MetaObjectListItem
         private MetaObject $object,
         private array $data,
         private int $revision,
+        private \DateTimeImmutable $revisionCreatedAt,
     ) {
     }
 
@@ -34,5 +35,10 @@ final class MetaObjectListItem
     public function revision(): int
     {
         return $this->revision;
+    }
+
+    public function revisionCreatedAt(): \DateTimeImmutable
+    {
+        return $this->revisionCreatedAt;
     }
 }

@@ -70,4 +70,38 @@ final class JsonApiResponseTest extends FeatureTestCase
         $this->assertArrayHasKey('revisionCreatedAt', $response['data']['meta']);
         $this->assertSame($payload['data'], $response['data']['attributes']);
     }
+
+    public function testRepositoryCreateDefaultsToSemanticSchemaVersion(): void
+    {
+        $this->client->request(
+            'POST',
+            '/api/v1/repository/tags',
+            [],
+            [],
+            [
+                'CONTENT_TYPE' => 'application/json',
+            ],
+            json_encode([
+                'name' => 'Default Schema Version Tag',
+                'data' => [
+                    'id' => '018f3f8e-86d4-73a8-b79f-9a50f9c49b8c',
+                    'name' => 'default-schema-version',
+                    'color' => '#00FF00',
+                    'creator' => [
+                        'id' => '018f3f8e-86d4-73a8-b79f-9a50f9c49b8d',
+                        'name' => 'Jane Doe',
+                    ],
+                ],
+            ], JSON_THROW_ON_ERROR)
+        );
+
+        $this->assertResponseStatusCodeSame(201);
+
+        $content = $this->client->getResponse()->getContent();
+        $response = json_decode(is_string($content) ? $content : '', true, 512, JSON_THROW_ON_ERROR);
+        $this->assertIsArray($response);
+        $this->assertIsArray($response['data'] ?? null);
+        $this->assertIsArray($response['data']['meta'] ?? null);
+        $this->assertSame('1.0.0', $response['data']['meta']['schemaVersion'] ?? null);
+    }
 }

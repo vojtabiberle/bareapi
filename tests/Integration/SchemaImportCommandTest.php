@@ -42,9 +42,9 @@ final class SchemaImportCommandTest extends KernelTestCase
         $repository = self::getContainer()->get(SchemaRepository::class);
         self::assertInstanceOf(SchemaRepository::class, $repository);
 
-        $note = $repository->getByObjectType('Note');
-        $tag = $repository->getByObjectType('Tag');
-        $tagBinding = $repository->getByObjectType('TagBinding');
+        $note = $repository->getByObjectType('notes');
+        $tag = $repository->getByObjectType('tags');
+        $tagBinding = $repository->getByObjectType('tag_bindings');
 
         $this->assertSame('1.0.0', $note->getVersion());
         $this->assertSame('1.0.0', $tag->getVersion());

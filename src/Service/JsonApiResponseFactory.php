@@ -13,7 +13,7 @@ final class JsonApiResponseFactory
     /**
      * @param array<string, mixed> $attributes
      */
-    public function created(MetaObject $object, string $name, string $branch, int $revision, array $attributes): JsonResponse
+    public function created(MetaObject $object, int $revision, \DateTimeImmutable $revisionCreatedAt, array $attributes): JsonResponse
     {
         return new JsonResponse([
             'data' => [
@@ -26,7 +26,7 @@ final class JsonApiResponseFactory
                     'lastUpdated' => $object->getUpdatedAt()->format(\DateTimeImmutable::ATOM),
                     'createdAt' => $object->getCreatedAt()->format(\DateTimeImmutable::ATOM),
                     'revision' => $revision,
-                    'revisionCreatedAt' => $object->getCreatedAt()->format(\DateTimeImmutable::ATOM),
+                    'revisionCreatedAt' => $revisionCreatedAt->format(\DateTimeImmutable::ATOM),
                 ],
                 'attributes' => $attributes,
             ],
@@ -36,10 +36,10 @@ final class JsonApiResponseFactory
     /**
      * @param array<string, mixed> $attributes
      */
-    public function ok(MetaObject $object, array $attributes, int $revision = 1): JsonResponse
+    public function ok(MetaObject $object, array $attributes, int $revision = 1, ?\DateTimeImmutable $revisionCreatedAt = null): JsonResponse
     {
         return new JsonResponse([
-            'data' => $this->resource($object, $attributes, $revision),
+            'data' => $this->resource($object, $attributes, $revision, $revisionCreatedAt ?? $object->getCreatedAt()),
         ]);
     }
 
@@ -55,7 +55,7 @@ final class JsonApiResponseFactory
     {
         return new JsonResponse([
             'data' => array_map(
-                fn (MetaObjectListItem $item): array => $this->resource($item->object(), $item->data(), $item->revision()),
+                fn (MetaObjectListItem $item): array => $this->resource($item->object(), $item->data(), $item->revision(), $item->revisionCreatedAt()),
                 $items
             ),
         ]);
@@ -70,7 +70,7 @@ final class JsonApiResponseFactory
      *   attributes: array<string, mixed>
      * }
      */
-    private function resource(MetaObject $object, array $attributes, int $revision): array
+    private function resource(MetaObject $object, array $attributes, int $revision, \DateTimeImmutable $revisionCreatedAt): array
     {
         return [
             'type' => $object->getType(),
@@ -82,7 +82,7 @@ final class JsonApiResponseFactory
                 'lastUpdated' => $object->getUpdatedAt()->format(\DateTimeImmutable::ATOM),
                 'createdAt' => $object->getCreatedAt()->format(\DateTimeImmutable::ATOM),
                 'revision' => $revision,
-                'revisionCreatedAt' => $object->getCreatedAt()->format(\DateTimeImmutable::ATOM),
+                'revisionCreatedAt' => $revisionCreatedAt->format(\DateTimeImmutable::ATOM),
             ],
             'attributes' => $attributes,
         ];

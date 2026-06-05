@@ -93,6 +93,32 @@ class MetaObject implements JsonSerializable
         return $this->id;
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
+    public static function fromStorage(
+        string $id,
+        string $type,
+        string $schemaVersion,
+        array $data,
+        string $name,
+        string $branch,
+        DateTimeImmutable $createdAt,
+        DateTimeImmutable $updatedAt,
+        DateTimeImmutable $lastUpdated,
+        ?DateTimeImmutable $deletedAt,
+    ): self {
+        $object = new self($type, $schemaVersion, $data, $name, $branch);
+        $object->id = Uuid::fromString($id);
+        $object->objectType = $type;
+        $object->createdAt = $createdAt;
+        $object->updatedAt = $updatedAt;
+        $object->lastUpdated = $lastUpdated;
+        $object->deletedAt = $deletedAt;
+
+        return $object;
+    }
+
     public function getType(): string
     {
         return $this->type;

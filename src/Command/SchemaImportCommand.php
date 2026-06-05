@@ -36,7 +36,7 @@ final class SchemaImportCommand extends Command
             }
 
             $schemaData = ControllerUtil::toStringKeyedArray($schema);
-            $objectType = $this->objectType($schemaData, $file->getBasename('.json'));
+            $objectType = $file->getBasename('.json');
             $version = $this->version($schemaData);
             $description = isset($schemaData['description']) && is_string($schemaData['description'])
                 ? $schemaData['description']
@@ -59,16 +59,6 @@ final class SchemaImportCommand extends Command
         $output->writeln(sprintf('Imported %d schema file(s).', $imported));
 
         return Command::SUCCESS;
-    }
-
-    /**
-     * @param array<string, mixed> $schema
-     */
-    private function objectType(array $schema, string $fallback): string
-    {
-        return isset($schema['title']) && is_string($schema['title']) && trim($schema['title']) !== ''
-            ? $schema['title']
-            : $fallback;
     }
 
     /**
