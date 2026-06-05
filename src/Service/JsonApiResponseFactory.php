@@ -20,8 +20,8 @@ final class JsonApiResponseFactory
                 'id' => $object->getId()->toString(),
                 'meta' => [
                     'schemaVersion' => $object->getSchemaVersion(),
-                    'branch' => $branch,
-                    'name' => $name,
+                    'branch' => $object->getBranch(),
+                    'name' => $object->getName(),
                     'lastUpdated' => $object->getUpdatedAt()->format(\DateTimeImmutable::ATOM),
                     'createdAt' => $object->getCreatedAt()->format(\DateTimeImmutable::ATOM),
                     'revision' => $revision,
@@ -63,8 +63,8 @@ final class JsonApiResponseFactory
             'id' => $object->getId()->toString(),
             'meta' => [
                 'schemaVersion' => $object->getSchemaVersion(),
-                'branch' => 'main',
-                'name' => $this->nameFromAttributes($attributes),
+                'branch' => $object->getBranch(),
+                'name' => $object->getName(),
                 'lastUpdated' => $object->getUpdatedAt()->format(\DateTimeImmutable::ATOM),
                 'createdAt' => $object->getCreatedAt()->format(\DateTimeImmutable::ATOM),
                 'revision' => 1,
@@ -72,21 +72,5 @@ final class JsonApiResponseFactory
             ],
             'attributes' => $attributes,
         ];
-    }
-
-    /**
-     * @param array<string, mixed> $attributes
-     */
-    private function nameFromAttributes(array $attributes): string
-    {
-        if (isset($attributes['name']) && is_string($attributes['name'])) {
-            return $attributes['name'];
-        }
-
-        if (isset($attributes['title']) && is_string($attributes['title'])) {
-            return $attributes['title'];
-        }
-
-        return '';
     }
 }

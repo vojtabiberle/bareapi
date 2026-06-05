@@ -58,7 +58,7 @@ final class RepositoryCreateController
             ? $payload['branch']
             : 'main';
 
-        $object = new MetaObject($objectType, $schemaVersion, ControllerUtil::toStringKeyedArray($validated));
+        $object = new MetaObject($objectType, $schemaVersion, ControllerUtil::toStringKeyedArray($validated), $name, $branch);
         $this->repository->save($object);
 
         return $this->responseFactory->created(
