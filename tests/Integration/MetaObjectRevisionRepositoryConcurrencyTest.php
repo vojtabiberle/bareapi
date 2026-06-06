@@ -52,7 +52,7 @@ final class MetaObjectRevisionRepositoryConcurrencyTest extends KernelTestCase
             );
             $connection->executeStatement('SET lock_timeout TO 100');
 
-            $this->expectException(\Throwable::class);
+            $this->expectException(\Doctrine\DBAL\Exception\DriverException::class);
             $repository->createNext($object, [
                 'title' => 'Updated',
                 'content' => 'Updated content',

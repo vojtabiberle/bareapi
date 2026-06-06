@@ -20,9 +20,6 @@ services:
         resource: '../src/*'
         exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
 
-    Bareapi\Repository\SchemaRepository:
-        public: true
-
     Bareapi\Controller\:
         resource: '../src/Controller'
         tags: ['controller.service_arguments']

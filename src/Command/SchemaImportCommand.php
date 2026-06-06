@@ -67,7 +67,7 @@ final class SchemaImportCommand extends Command
     private function version(array $schema): string
     {
         return isset($schema['version']) && is_string($schema['version']) && trim($schema['version']) !== ''
-            ? $schema['version']
+            ? trim($schema['version'])
             : '1.0.0';
     }
 }
