@@ -38,6 +38,20 @@ final class SoftDeleteTest extends FeatureTestCase
         $this->assertResponseStatusCodeSame(404);
     }
 
+    public function testRepositoryAllowsRecreatingObjectWithDeletedName(): void
+    {
+        $created = $this->createNote('Reusable deleted note');
+        $id = $this->jsonApiId($created);
+
+        $this->client->request('DELETE', '/api/v1/repository/notes/' . $id);
+        $this->assertResponseStatusCodeSame(204);
+
+        $recreated = $this->createNote('Reusable deleted note');
+        $recreatedId = $this->jsonApiId($recreated);
+
+        $this->assertNotSame($id, $recreatedId);
+    }
+
     public function testRepositoryDeleteRevisionSoftDeletesOnlyThatRevision(): void
     {
         $created = $this->createNote('Revision soft delete');

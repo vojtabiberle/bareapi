@@ -124,6 +124,24 @@
       }
     },
     "/api/v1/repository/{objectType}/{id}": {
+      "parameters": [
+        {
+          "name": "objectType",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
       "get": {
         "summary": "Get repository object",
         "responses": {
@@ -184,6 +202,32 @@
       }
     },
     "/api/v1/repository/{objectType}/{id}/revisions/{revision}": {
+      "parameters": [
+        {
+          "name": "objectType",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "revision",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
       "get": {
         "summary": "Get repository object revision",
         "responses": {

@@ -34,7 +34,7 @@ final class Version20260605092000 extends AbstractMigration
         $this->addSql('ALTER TABLE meta_objects ALTER last_updated SET NOT NULL');
         $this->addSql('CREATE INDEX idx_meta_objects_object_type ON meta_objects (object_type)');
         $this->addSql('CREATE INDEX idx_meta_objects_object_type_branch ON meta_objects (object_type, branch)');
-        $this->addSql("CREATE UNIQUE INDEX uniq_meta_objects_type_name_branch ON meta_objects (object_type, name, branch) WHERE name <> ''");
+        $this->addSql("CREATE UNIQUE INDEX uniq_meta_objects_type_name_branch ON meta_objects (object_type, name, branch) WHERE name <> '' AND deleted_at IS NULL");
     }
 
     public function down(Schema $schema): void
