@@ -95,7 +95,6 @@ final class ReferenceIntegrityTest extends FeatureTestCase
                 'CONTENT_TYPE' => 'application/json',
             ],
             json_encode([
-                'name' => 'note-1',
                 'data' => [
                     'tagId' => $newTagId,
                     'objectId' => 'note-1',

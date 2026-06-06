@@ -52,7 +52,6 @@ final class RepositoryRoutesTest extends FeatureTestCase
             'PUT',
             '/api/v1/repository/notes/' . $id,
             [
-                'name' => 'Replacement Notes',
                 'data' => [
                     'title' => 'Replacement',
                     'content' => 'Replacement content',
@@ -117,6 +116,67 @@ final class RepositoryRoutesTest extends FeatureTestCase
         $this->requestMalformedJson('PUT', '/api/v1/repository/notes/' . $this->jsonApiId($created));
 
         $this->assertResponseStatusCodeSame(400);
+    }
+
+    public function testRepositoryPatchRejectsTopLevelMetadata(): void
+    {
+        $created = $this->requestJsonApi(
+            'POST',
+            '/api/v1/repository/notes',
+            [
+                'name' => 'Patch Metadata',
+                'data' => [
+                    'title' => 'Initial',
+                    'content' => 'Initial content',
+                ],
+            ],
+            201
+        );
+
+        $response = $this->requestJsonApi(
+            'PATCH',
+            '/api/v1/repository/notes/' . $this->jsonApiId($created),
+            [
+                'name' => 'Ignored name',
+                'data' => [
+                    'content' => 'Updated content',
+                ],
+            ],
+            400
+        );
+
+        $this->assertSame('Repository metadata cannot be updated', $response['error'] ?? null);
+    }
+
+    public function testRepositoryPutRejectsTopLevelMetadata(): void
+    {
+        $created = $this->requestJsonApi(
+            'POST',
+            '/api/v1/repository/notes',
+            [
+                'name' => 'Put Metadata',
+                'data' => [
+                    'title' => 'Initial',
+                    'content' => 'Initial content',
+                ],
+            ],
+            201
+        );
+
+        $response = $this->requestJsonApi(
+            'PUT',
+            '/api/v1/repository/notes/' . $this->jsonApiId($created),
+            [
+                'schemaVersion' => '1.0.1',
+                'data' => [
+                    'title' => 'Replacement',
+                    'content' => 'Replacement content',
+                ],
+            ],
+            400
+        );
+
+        $this->assertSame('Repository metadata cannot be updated', $response['error'] ?? null);
     }
 
     public function testRepositoryShowUsesNeutralObjectTypeForLegacyTypedRows(): void

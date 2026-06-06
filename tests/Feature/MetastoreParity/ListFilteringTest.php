@@ -64,6 +64,22 @@ final class ListFilteringTest extends FeatureTestCase
         $this->assertResponseStatusCodeSame(400);
     }
 
+    public function testRejectsInvalidTableFieldFilterValueForObjectList(): void
+    {
+        $this->createTag('Alpha', 'red', 'Jan');
+
+        $this->client->request('GET', '/api/v1/repository/tags?revision=bad');
+        $this->assertResponseStatusCodeSame(400);
+    }
+
+    public function testRejectsInvalidTableFieldFilterValueForRevisionList(): void
+    {
+        $this->createTag('Alpha', 'red', 'Jan');
+
+        $this->client->request('GET', '/api/v1/repository/tags/revisions?revision=bad');
+        $this->assertResponseStatusCodeSame(400);
+    }
+
     public function testListsRepositoryObjectsByNeutralObjectTypeColumn(): void
     {
         $this->insertLegacyTypedTag();

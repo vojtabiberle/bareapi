@@ -188,7 +188,13 @@ class MetaObjectRepository
             $params['offset'] = $query->offset();
         }
 
-        return $this->hydrateListItems($this->em->getConnection()->fetchAllAssociative($sql, $params));
+        try {
+            $rows = $this->em->getConnection()->fetchAllAssociative($sql, $params);
+        } catch (\Doctrine\DBAL\Exception $e) {
+            throw new \InvalidArgumentException('Invalid filter value', 0, $e);
+        }
+
+        return $this->hydrateListItems($rows);
     }
 
     /**
@@ -270,7 +276,13 @@ class MetaObjectRepository
             $params['offset'] = $query->offset();
         }
 
-        return $this->hydrateListItems($this->em->getConnection()->fetchAllAssociative($sql, $params));
+        try {
+            $rows = $this->em->getConnection()->fetchAllAssociative($sql, $params);
+        } catch (\Doctrine\DBAL\Exception $e) {
+            throw new \InvalidArgumentException('Invalid filter value', 0, $e);
+        }
+
+        return $this->hydrateListItems($rows);
     }
 
     public function save(MetaObject $obj): void

@@ -66,8 +66,8 @@ final class RepositoryCreateController
             ], 422);
         }
 
-        $schemaVersion = isset($payload['schemaVersion']) && is_string($payload['schemaVersion'])
-            ? $payload['schemaVersion']
+        $schemaVersion = isset($payload['schemaVersion']) && is_string($payload['schemaVersion']) && trim($payload['schemaVersion']) !== ''
+            ? trim($payload['schemaVersion'])
             : '1.0.0';
         $name = isset($payload['name']) && is_string($payload['name'])
             ? $payload['name']

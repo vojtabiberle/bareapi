@@ -23,6 +23,6 @@ final class Version20260606172000 extends AbstractMigration
     public function down(Schema $schema): void
     {
         $this->addSql('DROP INDEX uniq_meta_objects_type_name_branch');
-        $this->addSql("CREATE UNIQUE INDEX uniq_meta_objects_type_name_branch ON meta_objects (object_type, name, branch) WHERE name <> ''");
+        $this->addSql("CREATE UNIQUE INDEX uniq_meta_objects_type_name_branch ON meta_objects (object_type, name, branch) WHERE name <> '' AND deleted_at IS NULL");
     }
 }

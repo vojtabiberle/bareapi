@@ -120,6 +120,11 @@ final class RepositoryObjectController
         } catch (\JsonException) {
             return $this->invalidJsonResponse();
         }
+        $metadataError = $this->metadataUpdateError($payload);
+        if ($metadataError instanceof JsonResponse) {
+            return $metadataError;
+        }
+
         $patchData = isset($payload['data']) && is_array($payload['data'])
             ? ControllerUtil::toStringKeyedArray($payload['data'])
             : [];
@@ -148,6 +153,11 @@ final class RepositoryObjectController
         } catch (\JsonException) {
             return $this->invalidJsonResponse();
         }
+        $metadataError = $this->metadataUpdateError($payload);
+        if ($metadataError instanceof JsonResponse) {
+            return $metadataError;
+        }
+
         $replacement = isset($payload['data']) && is_array($payload['data'])
             ? ControllerUtil::toStringKeyedArray($payload['data'])
             : [];
@@ -217,6 +227,20 @@ final class RepositoryObjectController
     {
         return new JsonResponse([
             'error' => 'Invalid JSON request body',
+        ], 400);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function metadataUpdateError(array $payload): ?JsonResponse
+    {
+        if (array_intersect(['name', 'branch', 'schemaVersion'], array_keys($payload)) === []) {
+            return null;
+        }
+
+        return new JsonResponse([
+            'error' => 'Repository metadata cannot be updated',
         ], 400);
     }
 
