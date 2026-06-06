@@ -71,6 +71,7 @@ final class ListFilteringTest extends FeatureTestCase
         $listed = $this->listTags('');
 
         $this->assertSame(['Legacy typed tag'], $this->names($listed));
+        $this->assertSame(['tags'], $this->types($listed));
     }
 
     public function testListsRepositoryRevisionsByNeutralObjectTypeColumn(): void
@@ -80,6 +81,7 @@ final class ListFilteringTest extends FeatureTestCase
         $listed = $this->listTagRevisions();
 
         $this->assertSame(['Legacy typed tag'], $this->names($listed));
+        $this->assertSame(['tags'], $this->types($listed));
     }
 
     private function createTag(string $name, string $color, string $creatorName): void
@@ -198,6 +200,20 @@ final class ListFilteringTest extends FeatureTestCase
             self::assertIsString($item['meta']['name']);
 
             return $item['meta']['name'];
+        }, $items);
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $items
+     * @return array<int, string>
+     */
+    private function types(array $items): array
+    {
+        return array_map(static function (array $item): string {
+            self::assertArrayHasKey('type', $item);
+            self::assertIsString($item['type']);
+
+            return $item['type'];
         }, $items);
     }
 

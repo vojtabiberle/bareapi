@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Bareapi\Tests\Feature\MetastoreParity;
 
 use Bareapi\Tests\Feature\FeatureTestCase;
+use Doctrine\DBAL\Connection;
 
 final class RepositoryRoutesTest extends FeatureTestCase
 {
@@ -118,6 +119,19 @@ final class RepositoryRoutesTest extends FeatureTestCase
         $this->assertResponseStatusCodeSame(400);
     }
 
+    public function testRepositoryShowUsesNeutralObjectTypeForLegacyTypedRows(): void
+    {
+        $id = $this->insertLegacyTypedNote();
+
+        $fetched = $this->requestJsonApi('GET', '/api/v1/repository/notes/' . $id, null, 200);
+
+        $this->assertSame('notes', $this->jsonApiType($fetched));
+        $this->assertSame([
+            'title' => 'Legacy typed note',
+            'content' => 'Legacy content',
+        ], $this->jsonApiAttributes($fetched));
+    }
+
     /**
      * @param array<string, mixed>|null $payload
      * @return array<string, mixed>
@@ -172,6 +186,19 @@ final class RepositoryRoutesTest extends FeatureTestCase
 
     /**
      * @param array<string, mixed> $document
+     */
+    private function jsonApiType(array $document): string
+    {
+        $this->assertArrayHasKey('data', $document);
+        $this->assertIsArray($document['data']);
+        $this->assertArrayHasKey('type', $document['data']);
+        $this->assertIsString($document['data']['type']);
+
+        return $document['data']['type'];
+    }
+
+    /**
+     * @param array<string, mixed> $document
      * @return array<string, mixed>
      */
     private function jsonApiAttributes(array $document): array
@@ -182,6 +209,39 @@ final class RepositoryRoutesTest extends FeatureTestCase
         $this->assertIsArray($document['data']['attributes']);
 
         return $this->stringKeyedArray($document['data']['attributes']);
+    }
+
+    private function insertLegacyTypedNote(): string
+    {
+        $connection = self::getContainer()->get(Connection::class);
+        $this->assertInstanceOf(Connection::class, $connection);
+        $id = '018ff3ae-c558-7ed8-8f68-0242ac1200ca';
+        $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+        $data = [
+            'title' => 'Legacy typed note',
+            'content' => 'Legacy content',
+        ];
+
+        $connection->insert('meta_objects', [
+            'id' => $id,
+            'type' => 'legacy_notes',
+            'object_type' => 'notes',
+            'schema_version' => '1.0.0',
+            'branch' => 'main',
+            'name' => 'Legacy typed note',
+            'data' => json_encode($data, JSON_THROW_ON_ERROR),
+            'created_at' => $now,
+            'updated_at' => $now,
+            'last_updated' => $now,
+        ]);
+        $connection->insert('meta_object_revisions', [
+            'uuid' => $id,
+            'revision' => 1,
+            'data' => json_encode($data, JSON_THROW_ON_ERROR),
+            'created_at' => $now,
+        ]);
+
+        return $id;
     }
 
     /**

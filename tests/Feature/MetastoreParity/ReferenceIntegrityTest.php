@@ -147,6 +147,42 @@ final class ReferenceIntegrityTest extends FeatureTestCase
         $this->assertResponseStatusCodeSame(200);
     }
 
+    public function testCreatesReferenceToLegacyTypedTargetByNeutralObjectType(): void
+    {
+        $this->saveTagBindingSchema('restrict');
+        $tagId = $this->insertLegacyTypedTag('Legacy referenced tag');
+
+        $this->createTagBinding($tagId, 'legacy-note-1');
+
+        $this->assertResponseStatusCodeSame(201);
+    }
+
+    public function testRestrictReferenceBlocksLegacyTypedTargetDelete(): void
+    {
+        $this->saveTagBindingSchema('restrict');
+        $tagId = $this->insertLegacyTypedTag('Legacy protected tag');
+        $this->createTagBinding($tagId, 'legacy-note-2');
+        $this->assertResponseStatusCodeSame(201);
+
+        $this->client->request('DELETE', '/api/v1/repository/tags/' . $tagId);
+
+        $this->assertResponseStatusCodeSame(409);
+    }
+
+    public function testCascadeDeleteRemovesReferencesForLegacyTypedDependent(): void
+    {
+        $this->saveTagBindingSchema('cascade');
+        $tagId = $this->createTag('Cascade root tag');
+        $bindingId = $this->insertLegacyTypedTagBinding($tagId, 'legacy-note-3');
+
+        $this->client->request('DELETE', '/api/v1/repository/tags/' . $tagId);
+
+        $this->assertResponseStatusCodeSame(204);
+        $this->client->request('GET', '/api/v1/repository/tag_bindings/' . $bindingId);
+        $this->assertResponseStatusCodeSame(404);
+        $this->assertSame(0, $this->referenceCount());
+    }
+
     private function saveTagBindingSchema(string $onDelete): void
     {
         $repository = self::getContainer()->get(SchemaRepository::class);
@@ -226,6 +262,79 @@ final class ReferenceIntegrityTest extends FeatureTestCase
         $this->assertResponseStatusCodeSame(201);
 
         return $this->responseId();
+    }
+
+    private function insertLegacyTypedTag(string $name): string
+    {
+        $data = [
+            'id' => '018ff3ae-c558-7ed8-8f68-0242ac1200d1',
+            'name' => $name,
+            'color' => 'red',
+            'creator' => [
+                'id' => '018ff3ae-c558-7ed8-8f68-0242ac1200d2',
+                'name' => 'Jan',
+            ],
+        ];
+
+        return $this->insertLegacyObject('legacy_tags', 'tags', $name, $data);
+    }
+
+    private function insertLegacyTypedTagBinding(string $tagId, string $objectId): string
+    {
+        $data = [
+            'tagId' => $tagId,
+            'objectId' => $objectId,
+        ];
+        $bindingId = $this->insertLegacyObject('legacy_tag_bindings', 'tag_bindings', $objectId, $data);
+
+        $connection = self::getContainer()->get(Connection::class);
+        $this->assertInstanceOf(Connection::class, $connection);
+        $connection->insert('meta_refs', [
+            'from_type' => 'tag_bindings',
+            'from_uuid' => $bindingId,
+            'path' => 'tagId',
+            'to_type' => 'tags',
+            'to_uuid' => $tagId,
+            'created_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+        ]);
+
+        return $bindingId;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function insertLegacyObject(string $legacyType, string $objectType, string $name, array $data): string
+    {
+        $connection = self::getContainer()->get(Connection::class);
+        $this->assertInstanceOf(Connection::class, $connection);
+        $id = match ($objectType . ':' . $name) {
+            'tags:Legacy referenced tag' => '018ff3ae-c558-7ed8-8f68-0242ac1200d3',
+            'tags:Legacy protected tag' => '018ff3ae-c558-7ed8-8f68-0242ac1200d4',
+            default => '018ff3ae-c558-7ed8-8f68-0242ac1200d5',
+        };
+        $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+
+        $connection->insert('meta_objects', [
+            'id' => $id,
+            'type' => $legacyType,
+            'object_type' => $objectType,
+            'schema_version' => '1.0.0',
+            'branch' => 'main',
+            'name' => $name,
+            'data' => json_encode($data, JSON_THROW_ON_ERROR),
+            'created_at' => $now,
+            'updated_at' => $now,
+            'last_updated' => $now,
+        ]);
+        $connection->insert('meta_object_revisions', [
+            'uuid' => $id,
+            'revision' => 1,
+            'data' => json_encode($data, JSON_THROW_ON_ERROR),
+            'created_at' => $now,
+        ]);
+
+        return $id;
     }
 
     private function createTagBinding(string $tagId, string $objectId): string

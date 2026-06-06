@@ -32,7 +32,7 @@ final class ReferenceIntegrityService
     public function applyDeleteRules(MetaObject $object): void
     {
         $this->applyDeleteRulesFor($object, []);
-        $this->metaRefRepository->deleteReferencesForObject($object->getType(), $object->getId()->toString());
+        $this->metaRefRepository->deleteReferencesForObject($object->getObjectType(), $object->getId()->toString());
     }
 
     /**
@@ -51,7 +51,7 @@ final class ReferenceIntegrityService
             }
 
             $target = $this->metaObjectRepository->find($value);
-            if (! $target instanceof MetaObject || $target->getType() !== $definition['refersTo']) {
+            if (! $target instanceof MetaObject || $target->getObjectType() !== $definition['refersTo']) {
                 throw new ReferenceValidationException('Referenced object not found');
             }
 
@@ -68,14 +68,15 @@ final class ReferenceIntegrityService
      */
     private function applyDeleteRulesFor(MetaObject $object, array $visited): void
     {
-        $key = $object->getType() . ':' . $object->getId()->toString();
+        $objectType = $object->getObjectType();
+        $key = $objectType . ':' . $object->getId()->toString();
         if (in_array($key, $visited, true)) {
             return;
         }
         $visited[] = $key;
 
-        foreach ($this->metaRefRepository->inboundReferences($object->getType(), $object->getId()->toString()) as $reference) {
-            $onDelete = $this->onDeleteFor($reference['from_type'], $reference['path'], $object->getType());
+        foreach ($this->metaRefRepository->inboundReferences($objectType, $object->getId()->toString()) as $reference) {
+            $onDelete = $this->onDeleteFor($reference['from_type'], $reference['path'], $objectType);
             if ($onDelete === 'restrict') {
                 throw new ReferenceDeleteRestrictedException('Object has restrict references');
             }
@@ -87,7 +88,7 @@ final class ReferenceIntegrityService
 
             $this->applyDeleteRulesFor($dependent, $visited);
             $this->metaObjectRepository->delete($dependent);
-            $this->metaRefRepository->deleteReferencesForObject($dependent->getType(), $dependent->getId()->toString());
+            $this->metaRefRepository->deleteReferencesForObject($dependent->getObjectType(), $dependent->getId()->toString());
         }
     }
 

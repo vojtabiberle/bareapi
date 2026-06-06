@@ -191,7 +191,7 @@ final class RepositoryObjectController
         }
 
         $object = $this->repository->find($id);
-        if (! $object instanceof MetaObject || $object->getType() !== $objectType) {
+        if (! $object instanceof MetaObject || $object->getObjectType() !== $objectType) {
             return null;
         }
 

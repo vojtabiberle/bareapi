@@ -17,7 +17,7 @@ final class JsonApiResponseFactory
     {
         return new JsonResponse([
             'data' => [
-                'type' => $object->getType(),
+                'type' => $object->getObjectType(),
                 'id' => $object->getId()->toString(),
                 'meta' => [
                     'schemaVersion' => $object->getSchemaVersion(),
@@ -73,7 +73,7 @@ final class JsonApiResponseFactory
     private function resource(MetaObject $object, array $attributes, int $revision, \DateTimeImmutable $revisionCreatedAt): array
     {
         return [
-            'type' => $object->getType(),
+            'type' => $object->getObjectType(),
             'id' => $object->getId()->toString(),
             'meta' => [
                 'schemaVersion' => $object->getSchemaVersion(),

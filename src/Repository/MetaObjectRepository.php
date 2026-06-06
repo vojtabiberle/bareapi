@@ -123,7 +123,7 @@ class MetaObjectRepository
         $sql = <<<'SQL'
             SELECT
                 mo.id,
-                mo.type,
+                mo.object_type AS type,
                 mo.schema_version,
                 mo.branch,
                 mo.name,
@@ -211,7 +211,7 @@ class MetaObjectRepository
         $sql = <<<'SQL'
             SELECT
                 mo.id,
-                mo.type,
+                mo.object_type AS type,
                 mo.schema_version,
                 mo.branch,
                 mo.name,
