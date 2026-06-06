@@ -7,6 +7,8 @@ namespace Bareapi\Repository;
 use Bareapi\Controller\ControllerUtil;
 use Bareapi\Entity\MetaObject;
 use Bareapi\Exception\InvalidFilterException;
+use Bareapi\Exception\SchemaNotFoundException;
+use Bareapi\Service\FilterQuery;
 use Bareapi\Service\SchemaServiceInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
@@ -32,6 +34,10 @@ class MetaObjectRepository
     public function find(string $id): ?MetaObject
     {
         $obj = $this->em->find($this->entityClass, $id);
+        if ($obj instanceof MetaObject && $obj->getDeletedAt() !== null) {
+            return null;
+        }
+
         return $obj instanceof MetaObject ? $obj : null;
     }
 
@@ -57,7 +63,7 @@ class MetaObjectRepository
     {
         $filterableFields = $this->schemaService->getFilterableFields($type);
 
-        $sql = 'SELECT * FROM meta_objects WHERE type = :type';
+        $sql = 'SELECT * FROM meta_objects WHERE type = :type AND deleted_at IS NULL';
         $params = [
             'type' => $type,
         ];
@@ -97,6 +103,188 @@ class MetaObjectRepository
         }, $result)));
     }
 
+    /**
+     * @return array<int, MetaObjectListItem>
+     * @throws InvalidFilterException
+     * @throws SchemaNotFoundException
+     */
+    public function listRepositoryObjects(string $type, FilterQuery $query, \Bareapi\Repository\SchemaRepository $schemaRepository): array
+    {
+        $allowedTableFields = [
+            'schema_version',
+            'branch',
+            'name',
+            'last_updated',
+            'created_at',
+            'revision',
+            'revision_created_at',
+        ];
+        $filterableFields = null;
+        $sql = <<<'SQL'
+            SELECT
+                mo.id,
+                mo.object_type AS type,
+                mo.schema_version,
+                mo.branch,
+                mo.name,
+                mo.created_at,
+                mo.updated_at,
+                mo.last_updated,
+                mor.revision,
+                mor.data,
+                mor.created_at AS revision_created_at
+            FROM meta_objects mo
+            JOIN LATERAL (
+                SELECT revision, data, created_at
+                FROM meta_object_revisions
+                WHERE uuid = mo.id AND deleted_at IS NULL
+                ORDER BY revision DESC
+                LIMIT 1
+            ) mor ON TRUE
+            WHERE mo.object_type = :type AND mo.deleted_at IS NULL
+        SQL;
+        $params = [
+            'type' => $type,
+        ];
+
+        foreach ($query->filters() as $field => $value) {
+            if (in_array($field, $allowedTableFields, true)) {
+                $paramName = 'filter_' . str_replace('.', '_', $field);
+                $sql .= sprintf(' AND %s = :%s', $this->tableColumn($field), $paramName);
+                $params[$paramName] = $value;
+                continue;
+            }
+
+            $filterableFields ??= $schemaRepository->filterableFields($type);
+            if (! in_array($field, $filterableFields, true)) {
+                throw new InvalidFilterException($field, $type);
+            }
+
+            $paramName = 'filter_' . str_replace('.', '_', $field);
+            $sql .= sprintf(' AND mor.data #>> %s = :%s', $this->jsonPathLiteral($field), $paramName);
+            $params[$paramName] = $value;
+        }
+
+        $orderBy = $query->orderBy();
+        if ($orderBy !== null) {
+            if (in_array($orderBy, $allowedTableFields, true)) {
+                $sql .= sprintf(' ORDER BY %s %s', $this->tableColumn($orderBy), strtoupper($query->orderDirection()));
+            } elseif (in_array($orderBy, $filterableFields ?? $schemaRepository->filterableFields($type), true)) {
+                $sql .= sprintf(' ORDER BY mor.data #>> %s %s', $this->jsonPathLiteral($orderBy), strtoupper($query->orderDirection()));
+            } else {
+                throw new InvalidFilterException($orderBy, $type);
+            }
+        } else {
+            $sql .= ' ORDER BY mo.created_at ASC';
+        }
+
+        if ($query->limit() !== null) {
+            $sql .= ' LIMIT :limit';
+            $params['limit'] = $query->limit();
+        }
+
+        if ($query->offset() > 0) {
+            $sql .= ' OFFSET :offset';
+            $params['offset'] = $query->offset();
+        }
+
+        try {
+            $rows = $this->em->getConnection()->fetchAllAssociative($sql, $params);
+        } catch (\Doctrine\DBAL\Exception $e) {
+            throw new \InvalidArgumentException('Invalid filter value', 0, $e);
+        }
+
+        return $this->hydrateListItems($rows);
+    }
+
+    /**
+     * @return array<int, MetaObjectListItem>
+     * @throws InvalidFilterException
+     * @throws SchemaNotFoundException
+     */
+    public function listRepositoryRevisions(string $type, FilterQuery $query, \Bareapi\Repository\SchemaRepository $schemaRepository): array
+    {
+        $allowedTableFields = [
+            'schema_version',
+            'branch',
+            'name',
+            'last_updated',
+            'created_at',
+            'revision',
+            'revision_created_at',
+        ];
+        $filterableFields = null;
+        $sql = <<<'SQL'
+            SELECT
+                mo.id,
+                mo.object_type AS type,
+                mo.schema_version,
+                mo.branch,
+                mo.name,
+                mo.created_at,
+                mo.updated_at,
+                mo.last_updated,
+                mor.revision,
+                mor.data,
+                mor.created_at AS revision_created_at
+            FROM meta_objects mo
+            JOIN meta_object_revisions mor ON mor.uuid = mo.id AND mor.deleted_at IS NULL
+            WHERE mo.object_type = :type AND mo.deleted_at IS NULL
+        SQL;
+        $params = [
+            'type' => $type,
+        ];
+
+        foreach ($query->filters() as $field => $value) {
+            if (in_array($field, $allowedTableFields, true)) {
+                $paramName = 'filter_' . str_replace('.', '_', $field);
+                $sql .= sprintf(' AND %s = :%s', $this->tableColumn($field), $paramName);
+                $params[$paramName] = $value;
+                continue;
+            }
+
+            $filterableFields ??= $schemaRepository->filterableFields($type);
+            if (! in_array($field, $filterableFields, true)) {
+                throw new InvalidFilterException($field, $type);
+            }
+
+            $paramName = 'filter_' . str_replace('.', '_', $field);
+            $sql .= sprintf(' AND mor.data #>> %s = :%s', $this->jsonPathLiteral($field), $paramName);
+            $params[$paramName] = $value;
+        }
+
+        $orderBy = $query->orderBy();
+        if ($orderBy !== null) {
+            if (in_array($orderBy, $allowedTableFields, true)) {
+                $sql .= sprintf(' ORDER BY %s %s', $this->tableColumn($orderBy), strtoupper($query->orderDirection()));
+            } elseif (in_array($orderBy, $filterableFields ?? $schemaRepository->filterableFields($type), true)) {
+                $sql .= sprintf(' ORDER BY mor.data #>> %s %s', $this->jsonPathLiteral($orderBy), strtoupper($query->orderDirection()));
+            } else {
+                throw new InvalidFilterException($orderBy, $type);
+            }
+        } else {
+            $sql .= ' ORDER BY mo.created_at ASC, mor.revision ASC';
+        }
+
+        if ($query->limit() !== null) {
+            $sql .= ' LIMIT :limit';
+            $params['limit'] = $query->limit();
+        }
+
+        if ($query->offset() > 0) {
+            $sql .= ' OFFSET :offset';
+            $params['offset'] = $query->offset();
+        }
+
+        try {
+            $rows = $this->em->getConnection()->fetchAllAssociative($sql, $params);
+        } catch (\Doctrine\DBAL\Exception $e) {
+            throw new \InvalidArgumentException('Invalid filter value', 0, $e);
+        }
+
+        return $this->hydrateListItems($rows);
+    }
+
     public function save(MetaObject $obj): void
     {
         $this->em->persist($obj);
@@ -105,8 +293,45 @@ class MetaObjectRepository
 
     public function delete(MetaObject $obj): void
     {
-        $this->em->remove($obj);
+        $obj->markDeleted(new \DateTimeImmutable());
         $this->em->flush();
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $rows
+     * @return array<int, MetaObjectListItem>
+     */
+    private function hydrateListItems(array $rows): array
+    {
+        return array_values(array_filter(array_map(function (array $row): ?MetaObjectListItem {
+            $id = ControllerUtil::toStringSafe($row['id'] ?? '');
+            if ($id === '') {
+                return null;
+            }
+
+            $data = json_decode(ControllerUtil::toStringSafe($row['data'] ?? '{}'), true, 512, JSON_THROW_ON_ERROR);
+            $revision = (int) ControllerUtil::toStringSafe($row['revision'] ?? '1');
+            $attributes = is_array($data) ? ControllerUtil::toStringKeyedArray($data) : [];
+            $object = MetaObject::fromStorage(
+                $id,
+                ControllerUtil::toStringSafe($row['type'] ?? ''),
+                ControllerUtil::toStringSafe($row['schema_version'] ?? ''),
+                $attributes,
+                ControllerUtil::toStringSafe($row['name'] ?? ''),
+                ControllerUtil::toStringSafe($row['branch'] ?? ''),
+                new \DateTimeImmutable(ControllerUtil::toStringSafe($row['created_at'] ?? 'now')),
+                new \DateTimeImmutable(ControllerUtil::toStringSafe($row['updated_at'] ?? 'now')),
+                new \DateTimeImmutable(ControllerUtil::toStringSafe($row['last_updated'] ?? 'now')),
+                null,
+            );
+
+            return new MetaObjectListItem(
+                $object,
+                $attributes,
+                $revision,
+                new \DateTimeImmutable(ControllerUtil::toStringSafe($row['revision_created_at'] ?? 'now')),
+            );
+        }, $rows)));
     }
 
     private function createTypeQueryBuilder(string $type): QueryBuilder
@@ -115,6 +340,21 @@ class MetaObjectRepository
         return $qb->select('m')
             ->from($this->entityClass, 'm')
             ->where('m.type = :type')
+            ->andWhere('m.deletedAt IS NULL')
             ->setParameter('type', $type);
+    }
+
+    private function tableColumn(string $field): string
+    {
+        return match ($field) {
+            'revision' => 'mor.revision',
+            'revision_created_at' => 'mor.created_at',
+            default => 'mo.' . $field,
+        };
+    }
+
+    private function jsonPathLiteral(string $field): string
+    {
+        return "'{" . implode(',', explode('.', $field)) . "}'";
     }
 }

@@ -1,208 +1,149 @@
 # API Usage Guide
 
-This API follows RESTful principles, providing a consistent interface for managing resources. Each resource type is accessible via predictable endpoints, and standard HTTP methods are used for Create, Retrieve, Update, and Delete (CRUD) operations.
+BareAPI exposes a product-neutral, schema-driven document store API under `/api/v1`. The older `/api/{type}` CRUD routes are still available as compatibility endpoints.
 
-## CRUD Lifecycle Example: `note` Resource
+## Repository Objects
 
-The `note` resource uses the following schema:
-
-```json
-{
-  "id": "UUIDv7",
-  "title": "string",
-  "content": "string"
-}
-```
-
-### 1. Create a New Note
-
-**Endpoint:**  
-`POST /api/note`
-
-**Request Body:**
-
-```json
-{
-  "title": "Meeting Notes",
-  "content": "Discuss project milestones and deadlines."
-}
-```
-
-**Example cURL:**
+Create an object:
 
 ```bash
-curl -X POST http://localhost:8000/api/note \
+curl -X POST http://localhost:8000/api/v1/repository/notes \
   -H "Content-Type: application/json" \
   -d '{
-    "title": "Meeting Notes",
-    "content": "Discuss project milestones and deadlines."
+    "name": "Release Notes",
+    "branch": "main",
+    "schemaVersion": "1.0.0",
+    "data": {
+      "title": "Initial",
+      "content": "Initial content"
+    }
   }'
 ```
 
-**Response Example:**
+Response bodies use a JSON:API-style envelope:
 
 ```json
 {
-  "id": "018f8e2e-7b6c-7b1a-8e2e-7b6c7b1a8e2e",
-  "title": "Meeting Notes",
-  "content": "Discuss project milestones and deadlines."
-}
-```
-
----
-
-### 2. Retrieve the Note
-
-**Endpoint:**  
-`GET /api/note/{UUID}`
-
-**Example cURL:**
-
-```bash
-curl http://localhost:8000/api/note/018f8e2e-7b6c-7b1a-8e2e-7b6c7b1a8e2e
-```
-
-**Response Example:**
-
-```json
-{
-  "id": "018f8e2e-7b6c-7b1a-8e2e-7b6c7b1a8e2e",
-  "title": "Meeting Notes",
-  "content": "Discuss project milestones and deadlines."
-}
-```
-
----
-
-### 3. Update the Note
-
-**Endpoint:**  
-`PUT /api/note/{UUID}`
-
-**Request Body:**
-
-```json
-{
-  "title": "Updated Meeting Notes",
-  "content": "Discuss project milestones, deadlines, and budget."
-}
-```
-
-**Example cURL:**
-
-```bash
-curl -X PUT http://localhost:8000/api/note/018f8e2e-7b6c-7b1a-8e2e-7b6c7b1a8e2e \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Updated Meeting Notes",
-    "content": "Discuss project milestones, deadlines, and budget."
-  }'
-```
-
-**Response Example:**
-
-```json
-{
-  "id": "018f8e2e-7b6c-7b1a-8e2e-7b6c7b1a8e2e",
-  "title": "Updated Meeting Notes",
-  "content": "Discuss project milestones, deadlines, and budget."
-}
-```
-
----
-
-### 4. Delete the Note
-
-**Endpoint:**  
-`DELETE /api/note/{UUID}`
-
-**Example cURL:**
-
-```bash
-curl -X DELETE http://localhost:8000/api/note/018f8e2e-7b6c-7b1a-8e2e-7b6c7b1a8e2e
-```
-
-**Response Example:**
-
-```json
-{
-  "status": "deleted"
-}
-```
-
----
-
-## Tags and Tag Bindings
-
-This section explains how to use the `Tag` and `TagBinding` data models to categorize and link resources.
-
-### Tag Model Overview
-
-The `Tag` object allows you to create labels that can be applied to other resources. Each tag has a unique identifier, a name, a color for display purposes, and information about its creator.
-
-**Schema:**
-```json
-{
-  "id": "UUIDv7",
-  "name": "string",
-  "color": "string",
-  "creator": {
-    "id": "UUIDv7",
-    "name": "string"
+  "data": {
+    "type": "notes",
+    "id": "018ff3ae-c558-7ed8-8f68-0242ac120002",
+    "meta": {
+      "schemaVersion": "1.0.0",
+      "branch": "main",
+      "name": "Release Notes",
+      "revision": 1,
+      "createdAt": "2026-06-05T09:00:00+00:00",
+      "lastUpdated": "2026-06-05T09:00:00+00:00",
+      "revisionCreatedAt": "2026-06-05T09:00:00+00:00"
+    },
+    "attributes": {
+      "title": "Initial",
+      "content": "Initial content"
+    }
   }
 }
 ```
 
-### TagBinding Model Explanation
+Supported repository routes:
 
-The `TagBinding` model provides a flexible way to associate a `Tag` with any other object, whether it's an internal resource within our system or an external one. This is a polymorphic association, meaning a single `TagBinding` can link a tag to different types of objects. This is achieved through the `objectId` field, which can hold a UUID for an internal resource or any unique string identifier for an external one.
+- `GET /api/v1/repository/{objectType}`
+- `POST /api/v1/repository/{objectType}`
+- `GET /api/v1/repository/{objectType}/{id}`
+- `PATCH /api/v1/repository/{objectType}/{id}`
+- `PUT /api/v1/repository/{objectType}/{id}`
+- `DELETE /api/v1/repository/{objectType}/{id}`
+- `GET /api/v1/repository/{objectType}/revisions`
+- `GET /api/v1/repository/{objectType}/{id}/revisions/{revision}`
+- `DELETE /api/v1/repository/{objectType}/{id}/revisions/{revision}`
 
-**Schema:**
+Deletes are soft deletes. Normal reads and lists hide deleted objects and deleted revisions.
+Object, revision, and reference writes are wrapped in one transaction for create, update, and delete flows.
+
+## Schemas
+
+Schemas are stored in the database and versioned by object type.
+
+- `GET /api/v1/schema/{objectType}` returns the default schema.
+- `GET /api/v1/schema/{objectType}/{version}` returns a specific schema version.
+- `bin/console bareapi:schema:import` imports `config/schemas/*.json` into the schema store.
+
+## Filtering
+
+Collection reads support schema-driven filters:
+
+```bash
+curl "http://localhost:8000/api/v1/repository/tags?color=red&creator.name=Jan&name%5Border%5D=desc&limit=10&offset=0"
+```
+
+JSON field filters must be allowed by schema metadata. If any property has `x-filterable: true`, only explicitly marked fields are filterable. If no property is explicitly marked, primitive properties are filterable by default. Dotted paths such as `creator.name` are supported.
+
+Table fields can also be filtered or ordered:
+
+- `schema_version`
+- `branch`
+- `name`
+- `last_updated`
+- `created_at`
+- `revision`
+- `revision_created_at`
+
+## Authorization
+
+Writes are public unless the default schema declares `x-bareapi.acl`:
+
 ```json
 {
-  "tagId": "UUIDv7",
-  "objectId": "string"
+  "x-bareapi.acl": {
+    "create": ["object:create"],
+    "update": ["object:update"],
+    "delete": ["object:delete"]
+  }
 }
 ```
 
-### Usage Examples
+Requests provide permissions with a simple bearer token:
 
-Here are some examples of how to use `TagBinding`.
+```bash
+curl -X POST http://localhost:8000/api/v1/repository/notes \
+  -H "Authorization: Bearer object:create" \
+  -H "Content-Type: application/json" \
+  -d '{"data":{"title":"Protected"}}'
+```
 
-#### Binding to Internal Notes
+This is intentionally generic so production deployments can replace the token source later.
 
-To link a `Tag` to an internal `Note` object, you populate the `objectId` field of the `TagBinding` with the `id` of the target `Note`.
+## References
 
-**Example:**
-
-Let's say you have a `Tag` with `id: "018f8e3a-5b1a-7c2b-8e3a-5b1a7c2b8e3a"` and a `Note` with `id: "018f8e2e-7b6c-7b1a-8e2e-7b6c7b1a8e2e"`.
-
-You would create a `TagBinding` like this:
+Schemas can declare references using `x-bareapi.references`:
 
 ```json
 {
-  "tagId": "018f8e3a-5b1a-7c2b-8e3a-5b1a7c2b8e3a",
-  "objectId": "018f8e2e-7b6c-7b1a-8e2e-7b6c7b1a8e2e"
+  "x-bareapi.references": [
+    {
+      "property": "tagId",
+      "refersTo": "tags",
+      "onDelete": "restrict"
+    }
+  ]
 }
 ```
 
-#### Binding to External Resources
+Supported `onDelete` values are `restrict` and `cascade`.
 
-To link a `Tag` to an external resource, you use a unique string identifier for that resource in the `objectId` field. This could be a URI, an ID from another system, or any other unique key.
+## Operational Endpoints
 
-**Example:**
+- `GET /` returns the service index.
+- `GET /health-check` checks database connectivity.
+- `GET /api/v1/documentation/openapi.json` returns the OpenAPI document.
 
-To tag an external article, you could use its URL as the `objectId`.
+## Legacy Compatibility
 
-```json
-{
-  "tagId": "018f8e3a-5b1a-7c2b-8e3a-5b1a7c2b8e3a",
-  "objectId": "https://example.com/articles/important-topic"
-}
-```
----
-## Summary
+The original routes remain available:
 
-- All CRUD operations use `/api/{type}` or `/api/{type}/{UUID}` endpoints.
-- The `note` resource requires a `title` and optionally accepts `content`.
-- All requests and responses use JSON format.
+- `GET /api/{type}`
+- `POST /api/{type}`
+- `GET /api/{type}/{id}`
+- `PUT /api/{type}/{id}`
+- `DELETE /api/{type}/{id}`
+
+New integrations should use `/api/v1`.

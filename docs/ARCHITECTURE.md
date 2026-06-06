@@ -1,79 +1,51 @@
-# System Architecture Overview
+# Architecture Overview
 
-## 1. Introduction
+BareAPI is a Symfony-based semantic and versioned document store. It keeps the original schema-driven CRUD model, but the v1 API stores schemas, metadata, revisions, references, and authorization metadata in product-neutral structures.
 
-BareAPI is a Symfony-based backend that exposes dynamic CRUD endpoints for arbitrary object types defined by JSON Schema files (`config/schemas/`). It uses a single generic Doctrine entity and runtime schema validation to handle all types uniformly, minimizing boilerplate and maximizing flexibility.
+## Core Tables
 
-## 2. Architectural Patterns
+- `schemas`: versioned JSON Schemas by `object_type` and `version`, with one default version per object type.
+- `meta_objects`: object metadata such as UUID, object type, schema version, branch, name, timestamps, and soft-delete marker.
+- `meta_object_revisions`: immutable revision payloads for each object UUID.
+- `meta_refs`: generic object references extracted from schema-declared reference paths.
 
-The application follows the Model-View-Controller (MVC) pattern and a layered architecture for separation of concerns, modularity, and scalability.
+The older `type` and `data` fields remain for compatibility with the legacy `/api/{type}` endpoints.
 
-## 3. Core Components
-
-- **Kernel:** Bootstraps the app. See [`src/Kernel.php`](src/Kernel.php:1).
-- **Controllers:** Handle HTTP requests for CRUD operations. See [`src/Controller/`](src/Controller/).
-- **Entity:** All data is stored in a single table via [`MetaObject.php`](src/Entity/MetaObject.php:1).
-- **Repository:** Data persistence and querying logic in [`MetaObjectRepository.php`](src/Repository/MetaObjectRepository.php:1).
-- **JSON Schemas:** Define object types and validation rules in [`config/schemas/`](config/schemas/).
-- **Routing:** Defined via PHP attributes in the controllers.
-- **Configuration:** Service wiring and autoloading in [`config/services.yaml`](config/services.yaml:1) and [`composer.json`](composer.json:1).
-
-## 4. Data Flow
+## Request Flow
 
 ```mermaid
 graph LR
-    A[Request] --> B[public/index.php]
-    B --> C[src/Kernel.php]
-    C --> D[Routing]
-    D --> E[Controller]
-    E --> F[MetaObjectRepository/MetaObject]
-    F --> G[Response]
+    A[HTTP Request] --> B[Symfony Routing]
+    B --> C[Controller]
+    C --> D[Schema Validation]
+    D --> E[Authorization and References]
+    E --> F[Repositories]
+    F --> G[PostgreSQL]
+    G --> H[JSON Response]
 ```
 
-## 5. Directory Structure
+## v1 Controllers
 
-- **src/Controller:** Invokable controllers for each CRUD operation and root endpoint.
-- **src/Entity:** Contains the `MetaObject` entity.
-- **src/Repository:** Contains the `MetaObjectRepository`.
-- **config/schemas:** JSON Schema files for each object type.
-- **public:** Web entry point (`index.php`).
-- **tests:** Unit and functional tests for controllers and features.
-- **docs:** Project documentation.
+- `RepositoryCreateController`: `POST /api/v1/repository/{objectType}`
+- `RepositoryListController`: `GET /api/v1/repository/{objectType}`
+- `RepositoryObjectController`: object read, update, delete, revision read, and revision delete routes.
+- `SchemaController`: schema read routes.
+- `HealthController`: `/health-check`
+- `DocumentationController`: `/api/v1/documentation/openapi.json`
+- `HomeController`: service index and route overview.
 
-## 6. CRUD Agents (Controllers)
+## Services
 
-Each CRUD operation is handled by a dedicated controller:
-- [`DataCreateController`](src/Controller/DataCreateController.php:1): `POST /api/{type}`
-- [`DataDeleteController`](src/Controller/DataDeleteController.php:1): `DELETE /api/{type}/{id}`
-- [`DataListController`](src/Controller/DataListController.php:1): `GET /api/{type}`
-- [`DataShowController`](src/Controller/DataShowController.php:1): `GET /api/{type}/{id}`
-- [`DataUpdateController`](src/Controller/DataUpdateController.php:1): `PUT /api/{type}/{id}`
-- [`HomeController`](src/Controller/HomeController.php:1): `/` root endpoint
+- `SchemaValidatorService`: validates payloads against JSON Schema files for legacy compatibility.
+- `SchemaRepository`: stores and reads versioned schemas from PostgreSQL.
+- `JsonApiResponseFactory`: builds JSON:API-style resource envelopes.
+- `AuthorizationService`: enforces optional `x-bareapi.acl` permissions for writes.
+- `FilterParser`: parses raw query strings so dotted JSON paths are preserved.
+- `ReferenceIntegrityService`: extracts references, validates targets, and applies restrict/cascade delete rules.
+- `TransactionManager`: wraps multi-table repository writes so object metadata, revisions, and reference rows commit or roll back together.
 
-Controllers use the repository and validate data against the relevant JSON Schema before persistence.
+## Compatibility
 
-## 7. Dynamic Routing
+The legacy `/api/{type}` routes are intentionally preserved. They remain useful for existing clients and for file-schema-only workflows. New document-store capabilities are exposed under `/api/v1`.
 
-Routes are defined directly in the controller classes using PHP attributes. This approach co-locates the route definition with its implementation.
-
-## 8. Validation Pipeline
-
-Controllers load the relevant JSON Schema and validate incoming data using `justinrainbow/json-schema` and Symfony Validator. Only schema-compliant data is persisted.
-
-## 9. How to Add a New Object Type
-
-1. Add a JSON Schema to `config/schemas/{newtype}.json`.
-2. (Optionally) define a `version` in your schema.
-3. Use the REST endpoints `/api/{newtype}` and `/api/{newtype}/{id}`—no code changes required.
-
-## 10. Dependencies
-
-- PHP 8.3+
-- Symfony Framework + Flex
-- Doctrine ORM + Migrations + DBAL (PostgreSQL)
-- symfony/validator, justinrainbow/json-schema
-- ramsey/uuid
-
----
-
-End of the architecture overview document.
+No Organization, Project, or admin-specific concepts are part of this implementation.

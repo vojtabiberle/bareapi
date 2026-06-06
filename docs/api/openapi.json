@@ -1,0 +1,252 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "BareAPI Document Store",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Service index",
+        "responses": {
+          "200": {
+            "description": "HTML service index"
+          }
+        }
+      }
+    },
+    "/health-check": {
+      "get": {
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "Database connection is usable"
+          },
+          "503": {
+            "description": "Database connection is unavailable"
+          }
+        }
+      }
+    },
+    "/api/v1/schema/{objectType}": {
+      "get": {
+        "summary": "Get default schema",
+        "parameters": [
+          {
+            "name": "objectType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default schema"
+          },
+          "404": {
+            "description": "Schema not found"
+          }
+        }
+      }
+    },
+    "/api/v1/schema/{objectType}/{version}": {
+      "get": {
+        "summary": "Get schema version",
+        "parameters": [
+          {
+            "name": "objectType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Versioned schema"
+          },
+          "404": {
+            "description": "Schema not found"
+          }
+        }
+      }
+    },
+    "/api/v1/repository/{objectType}": {
+      "get": {
+        "summary": "List repository objects",
+        "parameters": [
+          {
+            "name": "objectType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JSON:API resource collection"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create repository object",
+        "parameters": [
+          {
+            "name": "objectType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "JSON:API resource"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        }
+      }
+    },
+    "/api/v1/repository/{objectType}/{id}": {
+      "parameters": [
+        {
+          "name": "objectType",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Get repository object",
+        "responses": {
+          "200": {
+            "description": "JSON:API resource"
+          },
+          "404": {
+            "description": "Object not found"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Patch repository object",
+        "responses": {
+          "200": {
+            "description": "JSON:API resource"
+          }
+        }
+      },
+      "put": {
+        "summary": "Replace repository object",
+        "responses": {
+          "200": {
+            "description": "JSON:API resource"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft delete repository object",
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "409": {
+            "description": "Delete blocked by restrict reference"
+          }
+        }
+      }
+    },
+    "/api/v1/repository/{objectType}/revisions": {
+      "get": {
+        "summary": "List repository object revisions",
+        "parameters": [
+          {
+            "name": "objectType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JSON:API revision collection"
+          }
+        }
+      }
+    },
+    "/api/v1/repository/{objectType}/{id}/revisions/{revision}": {
+      "parameters": [
+        {
+          "name": "objectType",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "revision",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Get repository object revision",
+        "responses": {
+          "200": {
+            "description": "JSON:API resource revision"
+          },
+          "404": {
+            "description": "Revision not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft delete repository object revision",
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          }
+        }
+      }
+    }
+  }
+}
